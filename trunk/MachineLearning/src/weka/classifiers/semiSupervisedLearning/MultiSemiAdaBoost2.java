@@ -69,7 +69,7 @@ public class MultiSemiAdaBoost2 extends RandomizableIteratedSingleClassifierEnha
             m_ZeroR = null;
         }
         //如果不需要重抽样
-        if (!getUseResampling() && (m_Classifier instanceof WeightedInstancesHandler)) {
+        if (!getUseResampling() /*&& (m_Classifier instanceof WeightedInstancesHandler)*/) {
             buildClassifierWithWeights(traindata);
         } else {
             buildClassifierUsingResampling(traindata);
@@ -190,7 +190,7 @@ public class MultiSemiAdaBoost2 extends RandomizableIteratedSingleClassifierEnha
             evalTrainPool.evaluateModel(m_Classifiers[m_NumIterationsPerformed], trainPool);
             epsilon = evalTrainPool.errorRate();
             //错误率超过stop 或者UnlabeldDataSet中没有足够的数据，就跳出循环。
-            if (Utils.grOrEq(epsilon, stop) || Utils.eq(epsilon, 0)) {
+            if (Utils.grOrEq(epsilon, stop) /*|| Utils.eq(epsilon, 0)*/) {
                 //如果是第一轮，还可以试试，呵呵
                 if (m_NumIterationsPerformed == 0) {
                     m_NumIterationsPerformed = 1;

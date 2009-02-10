@@ -19,6 +19,7 @@ import weka.core.WeightedInstancesHandler;
 import weka.core.matrix.Matrix;
 import java.lang.Math;
 import java.util.Enumeration;
+import weka.classifiers.lazy.IB1;
 import weka.classifiers.lazy.IBk;
 import weka.core.Instance;
 
@@ -50,7 +51,15 @@ public class MultiSemiAdaBoost2 extends RandomizableIteratedSingleClassifierEnha
     public boolean m_onlyWeightIncorrect = true;
     /**标记的百分比*/
     private double m_percentLabeled = 10.0;
+   private int m_kNN=1;
 
+//    public void setKNN(int m_kNN) {
+//        this.m_kNN = m_kNN;
+//    }
+//
+//    public int getKNN() {
+//        return m_kNN;
+//    }
     @Override
     public void buildClassifier(Instances traindata) throws Exception {
         super.buildClassifier(traindata);
@@ -147,8 +156,9 @@ public class MultiSemiAdaBoost2 extends RandomizableIteratedSingleClassifierEnha
         splitTrain.splitTrainSet(m_percentLabeled, m_randomSplit);
         Evaluation evalUnlabledSet, evalTrainPool;
         //利用K紧邻给为标记的训练数据进行伪标记；
-        IBk knn = new IBk();
-        knn.setKNN(1);
+//        IBk knn = new IBk();
+//        knn.setKNN(m_kNN);
+        IB1 knn = new IB1();
         //标记的数据
         labledDataSet = splitTrain.getLabledData();
         //为标记的数据设定初始权值b/l

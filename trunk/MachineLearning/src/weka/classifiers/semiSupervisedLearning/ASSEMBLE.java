@@ -56,7 +56,7 @@ public class ASSEMBLE extends RandomizableIteratedSingleClassifierEnhancer
             m_ZeroR = null;
         }
         //如果不需要重抽样
-        if (!getUseResampling() /*&& (m_Classifier instanceof WeightedInstancesHandler)*/) {
+        if (!getUseResampling() && (m_Classifier instanceof WeightedInstancesHandler)) {
             buildClassifierWithWeights(traindata, 1.0, 0.9);
         } else {
             buildClassifierUsingResampling(traindata, 1.0, 0.9);
@@ -137,7 +137,7 @@ public class ASSEMBLE extends RandomizableIteratedSingleClassifierEnhancer
             evalTrainPool.evaluateModel(m_Classifiers[m_NumIterationsPerformed], trainPool);
             epsilon = evalTrainPool.errorRate();
             //错误率超过stop 或者UnlabeldDataSet中没有足够的数据，就跳出循环。
-            if (Utils.grOrEq(epsilon, 0.5)/* || Utils.eq(epsilon, 0)*/) {
+            if (Utils.grOrEq(epsilon, 0.5) || Utils.eq(epsilon, 0)) {
                 //如果是第一轮，还可以试试，呵呵
                 if (m_NumIterationsPerformed == 0) {
                     m_NumIterationsPerformed = 1;

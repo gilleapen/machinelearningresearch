@@ -46,7 +46,7 @@ public abstract class IteratedSingleClassifierEnhancer
   protected Classifier[] m_Classifiers;
   
   /** The number of iterations. */
-  protected int m_NumIterations = 10;
+  protected int m_NumIterations = 20;
 
   /** 
    * Stump method for building the classifiers.

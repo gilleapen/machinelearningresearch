@@ -120,7 +120,7 @@ public class Main
   
   /** for serialization. */
   private static final long serialVersionUID = 1453813254824253849L;
-  
+
   /**
    * DesktopPane with background image.
    * 
@@ -161,7 +161,7 @@ public class Main
       super.paintComponent(g);
      
       if (m_Background != null) {
-	g.setColor(Color.WHITE);
+	g.setColor(Color.BLUE);
 	g.clearRect(0, 0, getWidth(), getHeight());
 	
 	int width  = m_Background.getWidth(null);
@@ -187,7 +187,7 @@ public class Main
     
     /** the parent frame. */
     protected Main m_Parent;
-    
+
     /**
      * constructs a new internal frame that knows about its parent.
      * 
@@ -1753,9 +1753,14 @@ public class Main
    * @param args	the commandline arguments - ignored
    */
   public static void main(String[] args) {
-    LookAndFeel.setLookAndFeel();
-    
-    try {
+   //LookAndFeel.setLookAndFeel("com.sun.java.swing.plaf.mac.MacLookAndFeel");
+  //LookAndFeel.setLookAndFeel( "com.sun.java.swing.plaf.motif.MotifLookAndFeel");
+  // LookAndFeel.setLookAndFeel( "javax.swing.plaf.metal.MetalLookAndFeel");
+    //  LookAndFeel.setLookAndFeel( "com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
+  //LookAndFeel.setLookAndFeel("org.fife.plaf.Office2003.Office2003LookAndFeel");
+  //LookAndFeel.setLookAndFeel("org.fife.plaf.VisualStudio2005.VisualStudio2005LookAndFeel ");
+LookAndFeel.setLookAndFeel();
+   try {
       // uncomment the following line to disable the memory management:
       //m_Memory.setEnabled(false);
 
@@ -1780,7 +1785,7 @@ public class Main
 	System.out.println();
 	System.exit(0);
       }
-      
+     
       // setup splash screen
       Main.addStartupListener(new weka.gui.beans.StartUpListener() {
         public void startUpComplete() {

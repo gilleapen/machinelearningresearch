@@ -262,18 +262,18 @@ public class MultiSemiAdaBoost2_2_1 extends RandomizableIteratedSingleClassifier
             epsilon = evalTrainPool.errorRate();
             double pr[]=evalTrainPool.getM_predictions();
            //====写预测值
-          
+             
             //预测的类标记写入文件
 
             for(int i=0;i<pr.length;i++)
-            { 
+            {
                 String it = String.valueOf(m_NumIterationsPerformed+1);
                Label label = new Label(m_NumIterationsPerformed+1,0, it);
                sheetpre.addCell(label);
                Number pre = new Number(m_NumIterationsPerformed+1, i + 1, pr[i]);
                sheetpre.addCell(pre);
             }
-             
+
 //==
             //错误率传写入文件
             Number errrate= new Number(0,m_NumIterationsPerformed,epsilon);

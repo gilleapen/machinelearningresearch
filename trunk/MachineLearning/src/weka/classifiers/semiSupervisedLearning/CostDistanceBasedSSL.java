@@ -48,6 +48,9 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
     ArrayList<Side> map = new ArrayList<Side>();
     //近邻数目
     int k = 5;
+    Side[] m_parents = null;
+    ArrayList<Integer> m_redAgg = null;
+    ArrayList<Integer> m_blueAgg = null;
 
     @Override
     protected double[] getDistribution(Instance instance) throws Exception {
@@ -130,8 +133,9 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
         // 初始化未知最短路径的顶点集,即蓝点集
         blueAgg = new ArrayList<Integer>();
         for (int i = 0; i < nodes.length; i++) {
-             if(nodes[i]!=source)
-            blueAgg.add(nodes[i]);
+            if (nodes[i] != source) {
+                blueAgg.add(nodes[i]);
+            }
         }
 
         // 初始化每个顶点在最短路径中的父结点,及它们之间的权重,权重-1表示无连通
@@ -142,6 +146,9 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
             int n = blueAgg.get(i);
             parents[i + 1] = new Side(source, n, getWeight(source, n));
         }
+        m_parents = parents;
+        m_redAgg = redAgg;
+        m_blueAgg = blueAgg;
     }
 
     @Override
@@ -167,12 +174,12 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
         for (int unLabel = 0; unLabel < m_TrainsetNew.numInstances(); unLabel++) {
             if (m_TrainsetNew.instance(unLabel).classIsMissing())//未标记数据
             {
-                parents = null;
-                redAgg = null;
-                blueAgg = null;
+                m_parents = null;
+                m_redAgg = null;
+                m_blueAgg = null;
                 //为每个未标记的样本寻找到其他所有样本的最短路径；
                 init(nodes, unLabel, parents, redAgg, blueAgg);
-                Dijkstra dijkstra = new Dijkstra(map, parents, redAgg, blueAgg);
+                Dijkstra dijkstra = new Dijkstra(map, m_parents, m_redAgg, m_blueAgg);
 
                 while (dijkstra.blueAgg.size() > 0) {
                     MinShortPath msp = dijkstra.getMinSideNode();

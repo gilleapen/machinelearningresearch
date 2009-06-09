@@ -15,6 +15,8 @@ import weka.classifiers.collective.util.Splitter;
 import weka.classifiers.functions.SMO;
 import weka.classifiers.lazy.IBk;
 import weka.classifiers.semiSupervisedLearning.dijkstra.Side;
+import weka.core.Capabilities;
+import weka.core.Capabilities.Capability;
 import weka.core.Instance;
 import weka.core.InstanceComparator;
 import weka.core.Instances;
@@ -22,7 +24,7 @@ import weka.core.SelectedTag;
 import weka.core.TechnicalInformation;
 import weka.core.TechnicalInformationHandler;
 import weka.filters.Filter;
-import weka.filters.supervised.attribute.NominalToBinary;
+import weka.filters.unsupervised.attribute.NominalToBinary;
 import weka.filters.unsupervised.attribute.Normalize;
 import weka.filters.unsupervised.attribute.ReplaceMissingValues;
 import weka.filters.unsupervised.attribute.Standardize;
@@ -53,7 +55,15 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
     }
 
     public void setK(int k) {
-        this.k = k;
+        this.k = (k + 1);
+    }
+
+    /**
+     *  k个邻居，为建立邻接图
+     * @return
+     */
+    public int getK() {
+        return k;
     }
 
     /**
@@ -65,20 +75,20 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
     void createKNNGraph(Instances trainNew, int[] nodes, int k) throws Exception {
 
         int numInst = trainNew.numInstances();
-        int numCls = trainNew.numClasses();
+        // int numCls = trainNew.numClasses();
         //利用KNN寻找训练样本点的K个近邻
         IBk knn = new IBk();
         knn.setKNN(k);
-        knn.buildClassifier(m_Trainset);
+        knn.buildClassifier(trainNew);
 
         for (int i = 0; i < numInst; i++) {
-            Instance inst = m_Trainset.instance(i);
+            Instance inst = trainNew.instance(i);
             knn.computeKnnInformation(inst);
-            //得到邻域的索引和相应距离
+            //得到邻域的索引和相应距离          
             int[] indices = knn.getIndices();
             double[] distances = knn.getDistances();
 
-            for (int j = 0; j < k; k++) {
+            for (int j = 1; j < k; j++) {
                 map.add(new Side(i, indices[j], distances[j]));
             }
         }
@@ -119,7 +129,8 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
 
         // 初始化未知最短路径的顶点集,即蓝点集
         blueAgg = new ArrayList<Integer>();
-        for (int i = 1; i < nodes.length; i++) {
+        for (int i = 0; i < nodes.length; i++) {
+             if(nodes[i]!=source)
             blueAgg.add(nodes[i]);
         }
 
@@ -156,6 +167,9 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
         for (int unLabel = 0; unLabel < m_TrainsetNew.numInstances(); unLabel++) {
             if (m_TrainsetNew.instance(unLabel).classIsMissing())//未标记数据
             {
+                parents = null;
+                redAgg = null;
+                blueAgg = null;
                 //为每个未标记的样本寻找到其他所有样本的最短路径；
                 init(nodes, unLabel, parents, redAgg, blueAgg);
                 Dijkstra dijkstra = new Dijkstra(map, parents, redAgg, blueAgg);
@@ -166,6 +180,7 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
                         msp.outputPath(unLabel);
                     } else {// 可以打印出路径和最小权重
                         msp.outputPath();
+
                     }
 
                     int node = msp.getLastNode();
@@ -181,6 +196,26 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
         }
     }
 
+    /**
+     * Returns default capabilities of the classifier.
+     *
+     * @return      the capabilities of this classifier
+     */
+    public Capabilities getCapabilities() {
+        Capabilities result = new Capabilities(this);
+
+        // attributes
+        result.enable(Capability.NOMINAL_ATTRIBUTES);
+        result.enable(Capability.NUMERIC_ATTRIBUTES);
+        result.enable(Capability.DATE_ATTRIBUTES);
+        result.enable(Capability.MISSING_VALUES);
+
+        // class
+        result.enable(Capability.NOMINAL_CLASS);
+
+        return result;
+    }
+
     public String getRevision() {
         throw new UnsupportedOperationException("Not supported yet.");
     }
@@ -193,27 +228,6 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
     protected void build() throws Exception {
 
         buildClassifier();
-    }
-
-    /**
-     * generates copies of the original datasets and also builds a relation
-     * (hashtable) between each original instance and new instance. This is
-     * necessary to retrieve the determined class value in the
-     * <code>getDistribution(Instance)</code> method.
-     *
-     * @see   #getDistribution(Instance)
-     * @throws Exception if anything goes wrong
-     */
-    protected void generateSets() throws Exception {
-        super.generateSets();
-//利用父类的成员变量
-        m_Data =
-                new CostDistanceBasedSSLInstances(this, m_Trainset, m_Testset);
-        //貌似是合并后的数据确实
-        m_TrainsetNew =
-                m_Data.getTrainSet();
-        m_TestsetNew =
-                null;
     }
 
     /**
@@ -236,7 +250,37 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
         if (value.getTags() == SMO.TAGS_FILTER) {
             m_filterType = value.getSelectedTag().getID();
         }
+    }
 
+    /**
+     * Returns the tip text for this property
+     *
+     * @return 		tip text for this property suitable for
+     * 			displaying in the explorer/experimenter gui
+     */
+    public String filterTypeTipText() {
+        return "Determines how/if the data will be transformed.";
+    }
+
+    /**
+     * generates copies of the original datasets and also builds a relation
+     * (hashtable) between each original instance and new instance. This is
+     * necessary to retrieve the determined class value in the
+     * <code>getDistribution(Instance)</code> method.
+     *
+     * @see   #getDistribution(Instance)
+     * @throws Exception if anything goes wrong
+     */
+    protected void generateSets() throws Exception {
+        super.generateSets();
+//利用父类的成员变量
+        m_Data =
+                new CostDistanceBasedSSLInstances(this, m_Trainset, m_Testset);
+        //貌似是合并后的数据确实
+        m_TrainsetNew =
+                m_Data.getTrainSet();
+        m_TestsetNew =
+                null;
     }
 
     /**
@@ -263,7 +307,21 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
                 splitter.getTestset();
     }
 
+    /**
+     * performs initialization of members
+     */
+    protected void initializeMembers() {
+        super.initializeMembers();
+
+        m_TrainsetNew = null;
+        m_TestsetNew = null;
+
+        m_filterType = SMO.FILTER_NORMALIZE;
+        m_Data = null;
+
+    }
     /* ********************* other classes ************************** */
+
     /**
      * Stores the relation between unprocessed instance and processed instance.
      *
@@ -303,12 +361,15 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
             super();
 
             m_Parent = parent;
+
             // set up filters
             m_Missing = new ReplaceMissingValues();
             //只要训练数据的输入结构，
             m_Missing.setInputFormat(train);
+
             m_NominalToBinary = new NominalToBinary();
             m_NominalToBinary.setInputFormat(train);
+
             if (getParent().getFilterType().getSelectedTag().getID() == SMO.FILTER_STANDARDIZE) {
                 m_Filter = new Standardize();
                 m_Filter.setInputFormat(train);
@@ -328,10 +389,10 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
             for (int i = 0; i < test.numInstances(); i++) {
                 m_Unprocessed[train.numInstances() + i] = test.instance(i);
             }
-            //进行了一些简单的排序！
+            //把所有的数据集所有的数据都进行了排序！
             Arrays.sort(m_Unprocessed, m_Comparator);
 
-            // filter data
+            // filter data，这个时候trainset才有值
             m_Trainset = new Instances(train, 0);
             //成员的训练集是所有的train和测试数据之和？
             for (int i = 0; i < m_Unprocessed.length; i++) {
@@ -348,7 +409,6 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
                 m_Filter.setInputFormat(m_Trainset);
                 m_Trainset = Filter.useFilter(m_Trainset, m_Filter);
             }
-
         }
 
         /**

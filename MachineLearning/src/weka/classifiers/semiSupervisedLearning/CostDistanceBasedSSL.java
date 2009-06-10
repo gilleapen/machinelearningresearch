@@ -4,8 +4,11 @@
  */
 package weka.classifiers.semiSupervisedLearning;
 
-import weka.classifiers.semiSupervisedLearning.dijkstra.Dijkstra;
-import weka.classifiers.semiSupervisedLearning.dijkstra.MinShortPath;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import weka.classifiers.semiSupervisedLearning.DijkstraGraph.Dijkstra;
+//import weka.classifiers.semiSupervisedLearning.;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,13 +47,10 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
     protected Instances m_TrainsetNew;
     /** copy of the original test dataset */
     protected Instances m_TestsetNew;
-    //建立用来寻找最短路劲的图
-    ArrayList<Side> map = new ArrayList<Side>();
-    //近邻数目
     int k = 5;
-    Side[] m_parents = null;
-    ArrayList<Integer> m_redAgg = null;
-    ArrayList<Integer> m_blueAgg = null;
+    //define some constants
+    public static final double INF = Double.MAX_VALUE; //infinity
+    private double weightGraph[][];
 
     @Override
     protected double[] getDistribution(Instance instance) throws Exception {
@@ -70,14 +70,28 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
     }
 
     /**
+     * 初始化权值矩阵
+     */
+    void initWeightGraph(int NUM_VERTICES) {
+        weightGraph = new double[NUM_VERTICES][NUM_VERTICES];
+        for (int i = 0; i < NUM_VERTICES; i++) {
+            for (int j = 0; j < NUM_VERTICES; j++) {
+                weightGraph[i][j] = INF;
+            }
+        }
+    }
+
+    /**
      * 构建邻域图
      * @param trainNew 数据集
      * @param k 近邻数目
      * @throws java.lang.Exception
      */
-    void createKNNGraph(Instances trainNew, int[] nodes, int k) throws Exception {
+    void createKNNweightGraph(Instances trainNew, int[] nodes, int k) throws Exception {
 
         int numInst = trainNew.numInstances();
+        //初始化权值矩阵
+        initWeightGraph(numInst);
         // int numCls = trainNew.numClasses();
         //利用KNN寻找训练样本点的K个近邻
         IBk knn = new IBk();
@@ -90,66 +104,17 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
             //得到邻域的索引和相应距离          
             int[] indices = knn.getIndices();
             double[] distances = knn.getDistances();
-
+            //对称图
             for (int j = 1; j < k; j++) {
-                map.add(new Side(i, indices[j], distances[j]));
+
+                weightGraph[i][indices[j]] = distances[j];
+                weightGraph[indices[j]][i] = distances[j];
             }
         }
 
     }
 
-    /**
-     * 获得map中对应两点的权重
-     * @param preNode
-     * @param node
-     * @return
-     */
-    public double getWeight(int preNode, int node) {
-        if (map != null) {
-            for (Side s : map) {
-                if (s.getPreNode() == preNode && s.getNode() == node) {
-                    return s.getWeight();
-                }
-            }
-        }
-        return -1;
-    }
 
-    /**
-     *
-     *
-     * @param nodes 图节点
-     * @param source 源节点
-     * @param parents 初始父节点集合
-     * @param redAgg
-     * @param blueAgg
-     */
-    void init(int[] nodes, int source, Side[] parents, ArrayList<Integer> redAgg,
-            ArrayList<Integer> blueAgg) {
-        // 初始化已知最短路径的顶点集，即红点集，只加入顶点0
-        redAgg = new ArrayList<Integer>();
-        redAgg.add(source);
-
-        // 初始化未知最短路径的顶点集,即蓝点集
-        blueAgg = new ArrayList<Integer>();
-        for (int i = 0; i < nodes.length; i++) {
-            if (nodes[i] != source) {
-                blueAgg.add(nodes[i]);
-            }
-        }
-
-        // 初始化每个顶点在最短路径中的父结点,及它们之间的权重,权重-1表示无连通
-        parents = new Side[nodes.length];
-
-        parents[0] = new Side(-1, source, 0);
-        for (int i = 0; i < blueAgg.size(); i++) {
-            int n = blueAgg.get(i);
-            parents[i + 1] = new Side(source, n, getWeight(source, n));
-        }
-        m_parents = parents;
-        m_redAgg = redAgg;
-        m_blueAgg = blueAgg;
-    }
 
     @Override
     protected void buildClassifier() throws Exception {
@@ -161,46 +126,30 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
         for (int i = 0; i < numInst; i++) {
             nodes[i] = i;
         }
-        Side[] parents = null;
-        ArrayList<Integer> redAgg = null;
-        ArrayList<Integer> blueAgg = null;
 
-        createKNNGraph(m_TrainsetNew, nodes, k);
+        createKNNweightGraph(m_TrainsetNew, nodes, k);
 
         Enumeration e = m_TrainsetNew.enumerateInstances();
         int numlabled = 0;
-
+        FileWriter writer = new FileWriter("C:\\test.txt", true);
+        Dijkstra dijkstra = new Dijkstra(weightGraph);
         //对未标记样本中的每一数据寻找到标记样本数据集合的最短路径。
         for (int unLabel = 0; unLabel < m_TrainsetNew.numInstances(); unLabel++) {
             if (m_TrainsetNew.instance(unLabel).classIsMissing())//未标记数据
             {
-                m_parents = null;
-                m_redAgg = null;
-                m_blueAgg = null;
-                //为每个未标记的样本寻找到其他所有样本的最短路径；
-                init(nodes, unLabel, parents, redAgg, blueAgg);
-                Dijkstra dijkstra = new Dijkstra(map, m_parents, m_redAgg, m_blueAgg);
-
-                while (dijkstra.blueAgg.size() > 0) {
-                    MinShortPath msp = dijkstra.getMinSideNode();
-                    if (msp.getWeight() == -1) { //这个地方就倒过来了
-                        msp.outputPath(unLabel);
-                    } else {// 可以打印出路径和最小权重
-                        msp.outputPath();
-
+                int source = unLabel;//源点未标记数据
+                for (int Label = 0; Label < m_TrainsetNew.numInstances(); Label++) {
+                    if (!m_TrainsetNew.instance(Label).classIsMissing()) {
+                        int target = Label; //标记数据
+                        //dijkstra.printShortestPath(source, target);
+                        dijkstra.writePath(source, target, writer);
                     }
-
-                    int node = msp.getLastNode();
-                    dijkstra.redAgg.add(node);
-                    // 如果因为加入了新的顶点,而导致蓝点集中的顶点的最短路径减小,则要重要设置
-                    dijkstra.setWeight(node);
                 }
-                dijkstra = null;
 
             }
-
-
+           
         }
+         writer.close();
     }
 
     /**
@@ -208,6 +157,7 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
      *
      * @return      the capabilities of this classifier
      */
+    @Override
     public Capabilities getCapabilities() {
         Capabilities result = new Capabilities(this);
 
@@ -397,7 +347,7 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
                 m_Unprocessed[train.numInstances() + i] = test.instance(i);
             }
             //把所有的数据集所有的数据都进行了排序！
-            Arrays.sort(m_Unprocessed, m_Comparator);
+            //    Arrays.sort(m_Unprocessed, m_Comparator);
 
             // filter data，这个时候trainset才有值
             m_Trainset = new Instances(train, 0);

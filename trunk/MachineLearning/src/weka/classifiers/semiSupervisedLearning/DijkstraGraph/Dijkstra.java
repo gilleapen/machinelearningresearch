@@ -87,7 +87,7 @@ public class Dijkstra {
 
     public Dijkstra(double weight[][]) {
         int num_VERTICES = weight.length;
-        this.weight=weight;
+        this.weight = weight;
         nonexistent = num_VERTICES;
         this.NUM_VERTICES = num_VERTICES;
         FIRST_VERTEX = 0;
@@ -185,12 +185,12 @@ public class Dijkstra {
         dijkstra(origin);
 
         //System.out.println("The shortest path from " + name[origin] + " to " + name[destination] + " is:\n");
-        System.out.println("The shortest path from " + origin + " to " + destination + " is:\n");
+
         Stack<Integer> st = new Stack<Integer>();
 
         for (int v = destination; v != origin; v = predecessor[v]) {
             if (v == nonexistent) {
-                System.out.println("non-existent (because the graph is not connected).");
+                writer.write("non-existentshortest path(graph non-connected) " + origin + " to " + destination + " \n");
                 return;
             } else {
                 st.push(v);
@@ -203,7 +203,7 @@ public class Dijkstra {
             writer.write(st.pop() + " -> ");
         }
 
-        writer.write("[finished]"+"\n");
+        writer.write("[finished]" + "\n");
     }
 
     public void printShortestPath(int origin, int destination) {

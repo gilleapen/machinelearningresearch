@@ -99,24 +99,22 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
 //        IBk knn = new IBk();
 //        knn.setKNN(k);
 //        knn.buildClassifier(trainNew);
-         KnnGraph kgraph= new KnnGraph(trainNew,  k);
+        KnnGraph kgraph = new KnnGraph(trainNew, k);
         for (int i = 0; i < numInst; i++) {
             Instance inst = trainNew.instance(i);
             kgraph.computeKnn(inst);
             //得到邻域的索引和相应距离          
-            KnnInfor knn[]=kgraph.getKnnInfor();
+            KnnInfor knn[] = kgraph.getKnnInfor();
             //非对称图，对角线为0
             for (int j = 0; j < k; j++) {
-                int index=knn[j].getIndex();
-                double weight=knn[j].getDistance();
+                int index = knn[j].getIndex();
+                double weight = knn[j].getDistance();
                 weightGraph[i][index] = weight;
-        
+
             }
         }
 
     }
-
-
 
     @Override
     protected void buildClassifier() throws Exception {
@@ -144,17 +142,19 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
                     if (!m_TrainsetNew.instance(Label).classIsMissing()) {
                         int target = Label; //标记数据
                         //dijkstra.printShortestPath(source, target);
-                        dijkstra.writePath(source, target, writer);
-                       double targetClass=m_TrainsetNew.instance(Label).classValue();
-                        String str=Double.toString(targetClass);
-                        writer.write("targetClass"+str+"\n");
+                       //有路径才写入文件
+                        if (dijkstra.writePath(source, target, writer)) {
+                            double targetClass = m_TrainsetNew.instance(Label).classValue();
+                            String str = Double.toString(targetClass);
+                            writer.write("Class " + str + "\n");
+                        }
                     }
                 }
 
             }
-           
+
         }
-         writer.close();
+        writer.close();
     }
 
     /**

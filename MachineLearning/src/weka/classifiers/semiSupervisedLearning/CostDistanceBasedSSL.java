@@ -17,6 +17,8 @@ import weka.classifiers.collective.CollectiveRandomizableClassifier;
 import weka.classifiers.collective.util.Splitter;
 import weka.classifiers.functions.SMO;
 import weka.classifiers.lazy.IBk;
+import weka.classifiers.semiSupervisedLearning.DijkstraGraph.KnnGraph;
+import weka.classifiers.semiSupervisedLearning.DijkstraGraph.KnnInfor;
 import weka.classifiers.semiSupervisedLearning.dijkstra.Side;
 import weka.core.Capabilities;
 import weka.core.Capabilities.Capability;
@@ -94,21 +96,21 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
         initWeightGraph(numInst);
         // int numCls = trainNew.numClasses();
         //利用KNN寻找训练样本点的K个近邻
-        IBk knn = new IBk();
-        knn.setKNN(k);
-        knn.buildClassifier(trainNew);
-
+//        IBk knn = new IBk();
+//        knn.setKNN(k);
+//        knn.buildClassifier(trainNew);
+         KnnGraph kgraph= new KnnGraph(trainNew,  k);
         for (int i = 0; i < numInst; i++) {
             Instance inst = trainNew.instance(i);
-            knn.computeKnnInformation(inst);
+            kgraph.computeKnn(inst);
             //得到邻域的索引和相应距离          
-            int[] indices = knn.getIndices();
-            double[] distances = knn.getDistances();
-            //对称图
-            for (int j = 1; j < k; j++) {
-
-                weightGraph[i][indices[j]] = distances[j];
-                weightGraph[indices[j]][i] = distances[j];
+            KnnInfor knn[]=kgraph.getKnnInfor();
+            //非对称图，对角线为0
+            for (int j = 0; j < k; j++) {
+                int index=knn[j].getIndex();
+                double weight=knn[j].getDistance();
+                weightGraph[i][index] = weight;
+        
             }
         }
 
@@ -143,6 +145,9 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
                         int target = Label; //标记数据
                         //dijkstra.printShortestPath(source, target);
                         dijkstra.writePath(source, target, writer);
+                       double targetClass=m_TrainsetNew.instance(Label).classValue();
+                        String str=Double.toString(targetClass);
+                        writer.write("targetClass"+str+"\n");
                     }
                 }
 

@@ -190,7 +190,7 @@ public class Dijkstra {
 
         for (int v = destination; v != origin; v = predecessor[v]) {
             if (v == nonexistent) {
-                writer.write("non-existentshortest path(graph non-connected) " + origin + " to " + destination + " \n");
+               // writer.write("non-existentshortest path(graph non-connected) " + origin + " to " + destination + " \n");
                 return;
             } else {
                 st.push(v);
@@ -203,7 +203,7 @@ public class Dijkstra {
             writer.write(st.pop() + " -> ");
         }
 
-        writer.write("[finished]" + "\n");
+        writer.write("[finished]");
     }
 
     public void printShortestPath(int origin, int destination) {

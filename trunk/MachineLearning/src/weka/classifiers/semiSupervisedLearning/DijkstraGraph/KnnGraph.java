@@ -32,7 +32,7 @@ public class KnnGraph {
      */
  public   void computeKnn(Instance instance) {
         Enumeration e = m_dataset.enumerateInstances();
-        EuclideanDistance function = new EuclideanDistance();
+        EuclideanDistance function = new EuclideanDistance(m_dataset);
         int num = m_dataset.numInstances();
         // 将与其他实力的所有点的距离都计算一遍，并保存索引和距离
         KnnInfor allInfor[] = new KnnInfor[num];

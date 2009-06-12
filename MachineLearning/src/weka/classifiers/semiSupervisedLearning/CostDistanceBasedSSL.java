@@ -28,6 +28,7 @@ import weka.core.Instances;
 import weka.core.SelectedTag;
 import weka.core.TechnicalInformation;
 import weka.core.TechnicalInformationHandler;
+import weka.core.matrix.Matrix;
 import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.NominalToBinary;
 import weka.filters.unsupervised.attribute.Normalize;
@@ -53,6 +54,26 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
     //define some constants
     public static final double INF = Double.MAX_VALUE; //infinity
     private double weightGraph[][];
+    /*保存结果*/
+    Matrix m_resultMatrix;
+    private double m_sigma = 0.01;
+
+    /**
+     * performs initialization of members
+     */
+    @Override
+    protected void initializeMembers() {
+        super.initializeMembers();
+
+        m_TrainsetNew = null;
+        m_TestsetNew = null;
+
+        m_filterType = SMO.FILTER_NORMALIZE;
+
+        m_Data = null;
+        m_resultMatrix = null;
+        weightGraph = null;
+    }
 
     @Override
     protected double[] getDistribution(Instance instance) throws Exception {
@@ -69,6 +90,18 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
      */
     public int getK() {
         return k;
+    }
+
+    /**
+     * 设置sigma 扩大代价函数的差异
+     * @param sigma
+     */
+    public void setSigma(double sigma) {
+        m_sigma = sigma;
+    }
+
+    public double getSigma() {
+        return m_sigma;
     }
 
     /**
@@ -118,21 +151,13 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
 
     @Override
     protected void buildClassifier() throws Exception {
-        //创建图；
-        //建立用来寻找最短路劲的图
-        int numInst = m_TrainsetNew.numInstances();
-        int[] nodes = new int[numInst];
 
-        for (int i = 0; i < numInst; i++) {
-            nodes[i] = i;
-        }
-
-        createKNNweightGraph(m_TrainsetNew, nodes, k);
-
-        Enumeration e = m_TrainsetNew.enumerateInstances();
         int numlabled = 0;
+        //String fileString="C:\\test.txt"
         FileWriter writer = new FileWriter("C:\\test.txt", true);
         Dijkstra dijkstra = new Dijkstra(weightGraph);
+        //扩大代价距离的影响，设置sigma
+        dijkstra.setSigma(m_sigma);
         //对未标记样本中的每一数据寻找到标记样本数据集合的最短路径。
         for (int unLabel = 0; unLabel < m_TrainsetNew.numInstances(); unLabel++) {
             if (m_TrainsetNew.instance(unLabel).classIsMissing())//未标记数据
@@ -142,12 +167,21 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
                     if (!m_TrainsetNew.instance(Label).classIsMissing()) {
                         int target = Label; //标记数据
                         //dijkstra.printShortestPath(source, target);
-                       //有路径才写入文件
+                        //有路径才写入文件
+                        double mincostdistance = Double.POSITIVE_INFINITY;
                         if (dijkstra.writePath(source, target, writer)) {
-                            double targetClass = m_TrainsetNew.instance(Label).classValue();
+                            //获得目的节点的类标记
+                            double targetClass = m_TrainsetNew.instance(target).classValue();
                             String str = Double.toString(targetClass);
                             writer.write("Class " + str + "\n");
+                            //获得最短路径的代价距离和
+                            double tempcost = dijkstra.getCostPathDistance();
+                            // 找最短路径集中的最短的路径和代价和
+                            if (tempcost < mincostdistance) {
+                                mincostdistance = tempcost;
+                            }
                         }
+
                     }
                 }
 
@@ -157,6 +191,15 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
         writer.close();
     }
 
+    /**
+     * 获得该实例的类分布情况
+     * @param instance
+     * @return
+     * @throws java.lang.Exception
+     */
+//    protected double[] getDistribution(Instance instance) throws Exception{
+//
+// }
     /**
      * Returns default capabilities of the classifier.
      *
@@ -186,9 +229,29 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
+    /**
+     *
+     * @throws java.lang.Exception
+     */
+    public void init() throws Exception {
+        //创建图；
+        //建立用来寻找最短路劲的图
+        int numInst = m_TrainsetNew.numInstances();
+        int numClass = m_TrainsetNew.numClasses();
+        int[] nodes = new int[numInst];
+
+        for (int i = 0; i < numInst; i++) {
+            nodes[i] = i;
+        }
+        createKNNweightGraph(m_TrainsetNew, nodes, k);
+        
+        m_resultMatrix = new Matrix(numInst, numClass);
+
+    }
+
     @Override
     protected void build() throws Exception {
-
+        init();
         buildClassifier();
     }
 
@@ -267,20 +330,6 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
                 splitter.getTrainset();
         m_Testset =
                 splitter.getTestset();
-    }
-
-    /**
-     * performs initialization of members
-     */
-    protected void initializeMembers() {
-        super.initializeMembers();
-
-        m_TrainsetNew = null;
-        m_TestsetNew = null;
-
-        m_filterType = SMO.FILTER_NORMALIZE;
-        m_Data = null;
-
     }
     /* ********************* other classes ************************** */
 

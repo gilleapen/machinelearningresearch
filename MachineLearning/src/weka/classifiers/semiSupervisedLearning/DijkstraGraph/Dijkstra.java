@@ -23,7 +23,10 @@ public class Dijkstra {
     //define some constants
     public static final double INF = Double.MAX_VALUE; //infinity
     private int NUM_VERTICES = 8;
-
+    /*保存最短路径*/
+    Stack<Integer> m_shortestPath = new Stack<Integer>();
+    /*最短路径的距离之和*/
+    double m_costPathDistance = 0.0;
     //now define the cities
     public static final int HNL = 0;
     public static final int SFO = 1;
@@ -59,6 +62,7 @@ public class Dijkstra {
     double[] distance;
     boolean[] tight;
     int[] predecessor;
+    private double m_sigma = 0.01;
 
     /**
      *  设置图的权重
@@ -174,12 +178,33 @@ public class Dijkstra {
     }
 
     /**
+     * 计算最短路径中前后
+     * @param prev
+     * @param after
+     * @return
+     */
+    private double costDistance(double distance) {
+
+        double expdistance = 0.;
+        expdistance = Math.exp(distance / m_sigma);
+        return expdistance;
+    }
+
+    /**
+     * 设置sigma 扩大代价函数的差异
+     * @param sigma
+     */
+    public void setSigma(double sigma) {
+        m_sigma = sigma;
+    }
+
+    /**
      * 测试用，将最短路径写入文件
      * @param origin
      * @param destination
      * @param writer
      */
-    public void writePath(int origin, int destination, FileWriter writer) throws IOException {
+    public boolean writePath(int origin, int destination, FileWriter writer) throws IOException {
 
         assert (origin != nonexistent && destination != nonexistent);
         dijkstra(origin);
@@ -190,20 +215,45 @@ public class Dijkstra {
 
         for (int v = destination; v != origin; v = predecessor[v]) {
             if (v == nonexistent) {
-               // writer.write("non-existentshortest path(graph non-connected) " + origin + " to " + destination + " \n");
-                return;
+                // writer.write("non-existentshortest path(graph non-connected) " + origin + " to " + destination + " \n");
+                return false;
             } else {
                 st.push(v);
             }
         }
 
         st.push(origin);
+        //获得当前两个节点的最短路径
+        //   m_shortestPath=st;
+        //前一个
+        int prev = st.pop();
+        double shortestDistance = 0.;
+        double expdistance = 0.0;
+        // 将源写入文件
+        writer.write(prev + " -> ");
         while (!st.empty()) {
             // System.out.print(name[st.pop()] + " -> ");
-            writer.write(st.pop() + " -> ");
-        }
+            //后一个
+            int after = st.pop();
+            double dis = weight[prev][after];
+            shortestDistance += dis;
+            //代价距离
+            expdistance += costDistance(dis);
+            prev = after;// 后面的变成前面的
 
-        writer.write("[finished]");
+            writer.write(prev + " -> ");
+        }
+        m_costPathDistance = expdistance;
+        writer.write("dis=" + shortestDistance + " expdis" + expdistance + " ");
+        return true;
+    }
+
+    /**
+     * 获得最短路径的代价距离和
+     * @return
+     */
+    public double getCostPathDistance() {
+        return m_costPathDistance;
     }
 
     public void printShortestPath(int origin, int destination) {

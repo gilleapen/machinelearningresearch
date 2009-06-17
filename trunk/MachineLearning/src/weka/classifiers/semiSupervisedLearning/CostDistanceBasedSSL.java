@@ -74,10 +74,34 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
         m_resultMatrix = null;
         weightGraph = null;
     }
-
+/**
+ * 得到一个实例的最终类分布
+ * @param instance
+ * @return
+ * @throws java.lang.Exception
+ */
     @Override
     protected double[] getDistribution(Instance instance) throws Exception {
-        throw new UnsupportedOperationException("Not supported yet.");
+        int index;
+        double[] result;
+        int numClass;
+        index = m_Data.indexOf(instance);
+        result = null;
+        numClass = m_Data.getTrainSet().numClasses();
+        if (index > -1) {
+            result = new double[numClass];
+            double classvalue = m_resultMatrix.get(index, 0);
+            if (classvalue != -1.0) {
+                System.out.println("不能按我们的方法找到合适的最终类标记");
+            } else {
+                int classindex = (int) classvalue;
+                result[classindex] = 1.0;
+            }
+
+        } else {
+            throw new Exception("Cannot find instance: " + instance + "\n" + " -> pos=" + index + " = " + m_Data.get(StrictMath.abs(index)));
+        }
+        return result;
     }
 
     public void setK(int k) {
@@ -163,12 +187,16 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
             if (m_TrainsetNew.instance(unLabel).classIsMissing())//未标记数据
             {
                 int source = unLabel;//源点未标记数据
+                //某一个未标记样本到所有其它标记样本之间的最短距离。
+                double mincostdistance = Double.POSITIVE_INFINITY;
+                //未标记样本的最终类别
+                double finalClass = -1.0;
                 for (int Label = 0; Label < m_TrainsetNew.numInstances(); Label++) {
                     if (!m_TrainsetNew.instance(Label).classIsMissing()) {
                         int target = Label; //标记数据
                         //dijkstra.printShortestPath(source, target);
                         //有路径才写入文件
-                        double mincostdistance = Double.POSITIVE_INFINITY;
+
                         if (dijkstra.writePath(source, target, writer)) {
                             //获得目的节点的类标记
                             double targetClass = m_TrainsetNew.instance(target).classValue();
@@ -179,10 +207,19 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
                             // 找最短路径集中的最短的路径和代价和
                             if (tempcost < mincostdistance) {
                                 mincostdistance = tempcost;
+                                finalClass = targetClass;
                             }
                         }
 
                     }
+                }
+                if (finalClass == -1.0) {
+                    //
+                    System.out.println("该未标记数据与任意标记数据都不可达！");
+                    m_resultMatrix.set(unLabel, 0, -1.0);
+                } else {
+                    System.out.println("该未标记的样本最终类别为：" + finalClass);
+                    m_resultMatrix.set(unLabel, 0, finalClass);
                 }
 
             }
@@ -244,8 +281,8 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
             nodes[i] = i;
         }
         createKNNweightGraph(m_TrainsetNew, nodes, k);
-        
-        m_resultMatrix = new Matrix(numInst, numClass);
+        //直接将未标记样本的终类别存入结果中,初始类别都为-1.0
+        m_resultMatrix = new Matrix(numInst, 1, -1.0);
 
     }
 
@@ -331,6 +368,7 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
         m_Testset =
                 splitter.getTestset();
     }
+    // protected class
     /* ********************* other classes ************************** */
 
     /**
@@ -401,7 +439,7 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
                 m_Unprocessed[train.numInstances() + i] = test.instance(i);
             }
             //把所有的数据集所有的数据都进行了排序！
-            //    Arrays.sort(m_Unprocessed, m_Comparator);
+              Arrays.sort(m_Unprocessed, m_Comparator);
 
             // filter data，这个时候trainset才有值
             m_Trainset = new Instances(train, 0);

@@ -91,7 +91,7 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
         if (index > -1) {
             result = new double[numClass];
             double classvalue = m_resultMatrix.get(index, 0);
-            if (classvalue != -1.0) {
+            if (classvalue == -1.0) {
                 System.out.println("不能按我们的方法找到合适的最终类标记");
             } else {
                 int classindex = (int) classvalue;

@@ -230,7 +230,7 @@ public class Dijkstra {
         double shortestDistance = 0.;
         double expdistance = 0.0;
         // 将源写入文件
-        writer.write(prev + " -> ");
+       // writer.write(prev + " -> ");
         while (!st.empty()) {
             // System.out.print(name[st.pop()] + " -> ");
             //后一个
@@ -241,10 +241,10 @@ public class Dijkstra {
             expdistance += costDistance(dis);
             prev = after;// 后面的变成前面的
 
-            writer.write(prev + " -> ");
+           // writer.write(prev + " -> ");
         }
         m_costPathDistance = expdistance;
-        writer.write("dis=" + shortestDistance + " expdis" + expdistance + " ");
+      //  writer.write("dis=" + shortestDistance + " expdis" + expdistance + " ");
         return true;
     }
 

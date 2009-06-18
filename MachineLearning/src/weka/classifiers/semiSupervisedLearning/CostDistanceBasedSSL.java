@@ -178,7 +178,7 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
 
         int numlabled = 0;
         //String fileString="C:\\test.txt"
-        FileWriter writer = new FileWriter("C:\\test.txt", true);
+       FileWriter writer = new FileWriter("C:\\test.txt", true);
         Dijkstra dijkstra = new Dijkstra(weightGraph);
         //扩大代价距离的影响，设置sigma
         dijkstra.setSigma(m_sigma);
@@ -201,7 +201,7 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
                             //获得目的节点的类标记
                             double targetClass = m_TrainsetNew.instance(target).classValue();
                             String str = Double.toString(targetClass);
-                            writer.write("Class " + str + "\n");
+                           // writer.write("Class " + str + "\n");
                             //获得最短路径的代价距离和
                             double tempcost = dijkstra.getCostPathDistance();
                             // 找最短路径集中的最短的路径和代价和
@@ -218,14 +218,14 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
                     System.out.println("该未标记数据与任意标记数据都不可达！");
                     m_resultMatrix.set(unLabel, 0, -1.0);
                 } else {
-                    System.out.println("该未标记的样本最终类别为：" + finalClass);
+                    //System.out.println("该未标记的样本最终类别为：" + finalClass);
                     m_resultMatrix.set(unLabel, 0, finalClass);
                 }
 
             }
 
         }
-        writer.close();
+       writer.close();
     }
 
     /**

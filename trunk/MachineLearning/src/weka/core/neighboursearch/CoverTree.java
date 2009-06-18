@@ -95,6 +95,11 @@ public class CoverTree
   /** for serialization. */
   private static final long serialVersionUID = 7617412821497807586L;
 
+    @Override
+    public int[] kNNIndices(Instance target, int k) throws Exception {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
   /**
    * class representing a node of the cover tree.
    * 

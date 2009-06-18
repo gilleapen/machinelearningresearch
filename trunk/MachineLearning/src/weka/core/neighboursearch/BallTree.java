@@ -631,4 +631,9 @@ public class BallTree
   public String getRevision() {
     return RevisionUtils.extract("$Revision: 1.2 $");
   }
+
+    @Override
+    public int[] kNNIndices(Instance target, int k) throws Exception {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
 }

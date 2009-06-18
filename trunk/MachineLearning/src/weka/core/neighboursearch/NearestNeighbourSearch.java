@@ -730,7 +730,14 @@ public abstract class NearestNeighbourSearch
    * @throws Exception 	if the neighbours could not be found.
    */
   public abstract Instances kNearestNeighbours(Instance target, int k) throws Exception;
- 
+ /**
+  * 寻找 K个近邻的索引号
+  * @param target
+  * @param k
+  * @return
+  * @throws java.lang.Exception
+  */
+  public abstract int[] kNNIndices(Instance target, int k) throws Exception;
   /**
    * Returns the distances of the k nearest neighbours. The kNearestNeighbours
    * or nearestNeighbour needs to be called first for this to work.

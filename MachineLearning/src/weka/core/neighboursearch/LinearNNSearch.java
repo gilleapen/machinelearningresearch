@@ -66,6 +66,8 @@ public class LinearNNSearch
    * Constructor. Needs setInstances(Instances) 
    * to be called before the class is usable.
    */
+  /**记住邻域的索引*/
+  private  int[] m_indices;
   public LinearNNSearch() {
     super();
   }
@@ -192,7 +194,68 @@ public class LinearNNSearch
   public Instance nearestNeighbour(Instance target) throws Exception {
     return (kNearestNeighbours(target, 1)).instance(0);
   }
-  
+
+ public int[] kNNIndices(Instance target, int kNN) throws Exception{
+       //debug
+    boolean print=false;
+
+    if(m_Stats!=null)
+      m_Stats.searchStart();
+
+    MyHeap heap = new MyHeap(kNN);
+    double distance; int firstkNN=0;
+    for(int i=0; i<m_Instances.numInstances(); i++) {
+      if(target == m_Instances.instance(i)) //for hold-one-out cross-validation
+        continue;
+      if(m_Stats!=null)
+        m_Stats.incrPointCount();
+      if(firstkNN<kNN) {
+        if(print)
+          System.out.println("K(a): "+(heap.size()+heap.noOfKthNearest()));
+        distance = m_DistanceFunction.distance(target, m_Instances.instance(i), Double.POSITIVE_INFINITY, m_Stats);
+        if(distance == 0.0 && m_SkipIdentical)
+          if(i<m_Instances.numInstances()-1)
+            continue;
+          else
+            heap.put(i, distance);
+        heap.put(i, distance);
+        firstkNN++;
+      }
+      else {
+        MyHeapElement temp = heap.peek();
+        if(print)
+          System.out.println("K(b): "+(heap.size()+heap.noOfKthNearest()));
+        distance = m_DistanceFunction.distance(target, m_Instances.instance(i), temp.distance, m_Stats);
+        if(distance == 0.0 && m_SkipIdentical)
+          continue;
+        if(distance < temp.distance) {
+          heap.putBySubstitute(i, distance);
+        }
+        else if(distance == temp.distance) {
+          heap.putKthNearest(i, distance);
+        }
+
+      }
+    }
+
+    Instances neighbours = new Instances(m_Instances, (heap.size()+heap.noOfKthNearest()));
+    m_Distances = new double[heap.size()+heap.noOfKthNearest()];
+    m_indices = new int[heap.size()+heap.noOfKthNearest()];
+    int i=1; MyHeapElement h;
+    while(heap.noOfKthNearest()>0) {
+      h = heap.getKthNearest();
+      m_indices[m_indices.length-i] = h.index;
+      m_Distances[m_indices.length-i] = h.distance;
+      i++;
+    }
+    while(heap.size()>0) {
+      h = heap.get();
+      m_indices[m_indices.length-i] = h.index;
+      m_Distances[m_indices.length-i] = h.distance;
+      i++;
+    }
+     return m_indices;
+ }
   /**
    * Returns k nearest instances in the current neighbourhood to the supplied
    * instance.
@@ -274,6 +337,13 @@ public class LinearNNSearch
     
     return neighbours;    
   }
+///**
+// * 获得邻域对应距离
+// * @return
+// */
+//    public double[] getDistances() throws Exception{
+//        return m_Distances;
+//    }
   
   /** 
    * Returns the distances of the k nearest neighbours. The kNearestNeighbours

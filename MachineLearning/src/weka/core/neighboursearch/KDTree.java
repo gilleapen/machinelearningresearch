@@ -1330,4 +1330,9 @@ public class KDTree
   public String getRevision() {
     return RevisionUtils.extract("$Revision: 1.3 $");
   }
+
+    @Override
+    public int[] kNNIndices(Instance target, int k) throws Exception {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
 }

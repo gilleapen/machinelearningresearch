@@ -207,7 +207,7 @@ public class Dijkstra {
     public boolean writePath(int origin, int destination, FileWriter writer) throws IOException {
 
         assert (origin != nonexistent && destination != nonexistent);
-        dijkstra(origin);
+//        dijkstra(origin);
 
         //System.out.println("The shortest path from " + name[origin] + " to " + name[destination] + " is:\n");
 
@@ -230,7 +230,7 @@ public class Dijkstra {
         double shortestDistance = 0.;
         double expdistance = 0.0;
         // 将源写入文件
-       // writer.write(prev + " -> ");
+        // writer.write(prev + " -> ");
         while (!st.empty()) {
             // System.out.print(name[st.pop()] + " -> ");
             //后一个
@@ -241,10 +241,10 @@ public class Dijkstra {
             expdistance += costDistance(dis);
             prev = after;// 后面的变成前面的
 
-           // writer.write(prev + " -> ");
+        // writer.write(prev + " -> ");
         }
         m_costPathDistance = expdistance;
-      //  writer.write("dis=" + shortestDistance + " expdis" + expdistance + " ");
+        //  writer.write("dis=" + shortestDistance + " expdis" + expdistance + " ");
         return true;
     }
 
@@ -259,7 +259,7 @@ public class Dijkstra {
     public void printShortestPath(int origin, int destination) {
 
         assert (origin != nonexistent && destination != nonexistent);
-        dijkstra(origin);
+       // dijkstra(origin);
 
         //System.out.println("The shortest path from " + name[origin] + " to " + name[destination] + " is:\n");
         System.out.println("The shortest path from " + origin + " to " + destination + " is:\n");
@@ -314,14 +314,16 @@ public class Dijkstra {
             {INF, INF, INF, INF, 1120, 1099, 1205, 0}, //MIA
         };
         Dijkstra dijkstra = new Dijkstra(weight1);
-        int source = 3;
-        for (int i = 0; i < weight1.length; i++) {
-            if (i != source) {
-                dijkstra.printShortestPath(source, i);
+        //  int source = 3;
+        for (int source = 0; source < weight1.length; source++) {
+            dijkstra.dijkstra(source);
+            for (int i = 0; i < weight1.length; i++) {
+                if (i != source) {
+                    dijkstra.printShortestPath(source, i);
+                }
+            //   dijkstra.
             }
-        //   dijkstra.
         }
-
     }
 }
 

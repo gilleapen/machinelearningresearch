@@ -191,6 +191,7 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
                 double mincostdistance = Double.POSITIVE_INFINITY;
                 //未标记样本的最终类别
                 double finalClass = -1.0;
+                dijkstra.dijkstra(source);
                 for (int Label = 0; Label < m_TrainsetNew.numInstances(); Label++) {
                     if (!m_TrainsetNew.instance(Label).classIsMissing()) {
                         int target = Label; //标记数据

@@ -75,6 +75,7 @@ public class ASSEMBLE extends RandomizableIteratedSingleClassifierEnhancer
     /**
      *通过权重来建立分类器
      * @param traindata
+     * 论文版本权重都为1
      */
     protected void buildClassifierWithWeights(Instances traindata, double alpha, double belta) throws Exception {
         //将训练数据分成有标记的和没有标记的数据
@@ -100,7 +101,8 @@ public class ASSEMBLE extends RandomizableIteratedSingleClassifierEnhancer
         //每次训练的训练数据,数量会递增，不断从未标记的实例中提取实例加入到其中
         trainPool = splitTrain.getLabledData();
         //为标记的数据设定初始权值b/l
-        //  setWeights(trainPool, belta / (double) trainPool.numInstances());
+      //  setWeights(trainPool, 0.9);
+     //setWeights(trainPool, belta );
         //标记的数据
         labeledDataSet = new Instances(splitTrain.getLabledData(), 0,
                 splitTrain.getLabledData().numInstances());
@@ -108,7 +110,9 @@ public class ASSEMBLE extends RandomizableIteratedSingleClassifierEnhancer
         //未标记的实例，
         UnlabledDataSet = splitTrain.getUnLabledData();
         //为未标记的数据设定初始权值（1-b）/l
-        //    setWeights(UnlabledDataSet, (1.0 - belta) / (double) UnlabledDataSet.numInstances());
+        //setWeights(UnlabledDataSet, (1.0 - belta));
+     //   setWeights(UnlabledDataSet, 0.8);
+      //  setWeights(UnlabledDataSet, (1.0 - belta) / (double) UnlabledDataSet.numInstances());
         //利用KNN方法预先进行类别标记
         Enumeration e = UnlabledDataSet.enumerateInstances();
         //利用标记的数据建立KNN分类器。

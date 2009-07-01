@@ -301,7 +301,7 @@ public class LogWindow
 
     // set layout
     setSize(600, 400);
-    width = getBounds().width;
+      width = getBounds().width;
     setLocation(
         getGraphicsConfiguration().getBounds().width - width, getLocation().y);
     getContentPane().setLayout(new BorderLayout());

@@ -61,8 +61,8 @@ public class Plot2D
   public static final int ERROR_SHAPE = 1000;
   public static final int MISSING_SHAPE = 2000;
   //标记样本的形状和大小
-  public static final int LABEL_SHAPE=3000;
-  public static final int LABEL_SHAPE_SIZE=5;
+  public static final int LABEL_SHAPE=5;
+  public static final int LABEL_SHAPE_SIZE=8;
   public static final int CONST_AUTOMATIC_SHAPE = -1;
   public static final int X_SHAPE = 0;
   public static final int PLUS_SHAPE = 1;
@@ -885,6 +885,9 @@ public class Plot2D
     case ERROR_SHAPE: // draws the nominal error shape 
       gx.drawRect((int)(x-size),(int)(y-size),(size*2),(size*2));
       break;
+//   case LABEL_SHAPE://画圆 标记数据
+//       gx.drawOval((int)(x-size),(int)(y-size), (size*2),(size*2));
+//       break;
     case MISSING_SHAPE:
       int hf = fm.getAscent();
       int width = fm.stringWidth("M");

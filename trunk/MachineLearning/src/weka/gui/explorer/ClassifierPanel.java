@@ -92,6 +92,7 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.Random;
 import java.util.Vector;
 import java.util.zip.GZIPInputStream;
@@ -1059,6 +1060,71 @@ public class ClassifierPanel
         }
         outBuff.append("\n");
     }
+    /**
+     * * 生产训练集和测试集，并确保每个类都有数据
+     * @param runInstances
+     * @param train
+     * @param test
+     * @param percent
+     * @param rand
+     */
+void generateRandTrainTestSet(Instances runInstances,Instances train, Instances test,
+         double percent, Random rand) {
+        // Nominal class
+        if (runInstances.classAttribute().isNominal()) {
+
+            // create the subset for each classs
+            int numClasses = runInstances.numClasses();
+            Instances[] subsets = new Instances[numClasses + 1];
+            for (int i = 0; i < numClasses + 1; i++) {
+                subsets[i] = new Instances(runInstances, 10);
+            }
+
+            // divide instances into subsets
+            Enumeration e = runInstances.enumerateInstances();
+            while (e.hasMoreElements()) {
+                Instance inst = (Instance) e.nextElement();
+                if (inst.classIsMissing()) {
+                    subsets[numClasses].add(inst);
+                } else {
+                    subsets[(int) inst.classValue()].add(inst);
+                }
+            }
+
+            // Compactify them
+            for (int i = 0; i < numClasses + 1; i++) {
+                subsets[i].compactify();
+            }
+
+           
+            for (int i = 0; i < numClasses + 1; i++) {
+                int trainSize =
+                        Utils.probRound(subsets[i].numInstances() * percent / 100, rand);
+                for (int j = 0; j < trainSize; j++) {
+                    train.add(subsets[i].instance(j));
+                }
+                for (int j = trainSize; j < subsets[i].numInstances(); j++) {
+                    test.add(subsets[i].instance(j));
+                }
+                // free memory
+                subsets[i] = null;
+            }
+            train.compactify();
+            test.compactify();
+
+            // randomize the final sets
+            train.randomize(rand);
+            test.randomize(rand);
+        } else {
+
+            // Numeric target
+            int trainSize =
+                    Utils.probRound(runInstances.numInstances() * percent / 100, rand);
+            int testSize = runInstances.numInstances() - trainSize;
+            train = new Instances(runInstances, 0, trainSize);
+            test = new Instances(runInstances, trainSize, testSize);
+        }
+    }
 
     /**
      * Starts running the currently configured classifier with the current
@@ -1341,6 +1407,11 @@ public class ClassifierPanel
                                 break;
 
                             case 2: // Percent split
+                                int trainSize = 0;
+                                // merge into train and test sets
+                               Instances train = new Instances(inst, inst.numInstances());
+                                Instances test = new Instances(inst, inst.numInstances());
+                                //随即生成，并且能基本保证没类都有数据
                                 if (!m_PreserveOrderBut.isSelected()) {
                                     m_Log.statusMessage("Randomizing instances...");
                                     try {
@@ -1349,27 +1420,31 @@ public class ClassifierPanel
                                         m_Log.logMessage("Trouble parsing random seed value");
                                         rnd = 1;
                                     }
-                                    inst.randomize(new Random(rnd));
+                                    Random rand = new Random(rnd);
+                                    inst.randomize(rand);
+                                    generateRandTrainTestSet(inst, train, test, percent, rand);
+                                    trainSize = train.numInstances();
+                                } else {
+                                    trainSize = (int) Math.round(inst.numInstances() * percent / 100);
+                                    int testSize = inst.numInstances() - trainSize;
+                                    train = new Instances(inst, 0, trainSize);
+                                    test = new Instances(inst, trainSize, testSize);
                                 }
-                                int trainSize = (int) Math.round(inst.numInstances() * percent / 100);
-                                int testSize = inst.numInstances() - trainSize;
-                                Instances train = new Instances(inst, 0, trainSize);
-                                Instances test = new Instances(inst, trainSize, testSize);
                                 m_Log.statusMessage("Building model on training split (" + trainSize + " instances)...");
                                 Classifier current = null;
                                 try {
                                     current = Classifier.makeCopy(template);
                                 } catch (Exception ex) {
                                     m_Log.logMessage("Problem copying classifier: " + ex.getMessage());
-                                }                         
-                            //进行了修改
-                                      current.buildClassifier(train);
-                               eval = new Evaluation(train, costMatrix);
+                                }
+                                //进行了修改
+                                current.buildClassifier(train);
+                                eval = new Evaluation(train, costMatrix);
                                 if (current instanceof CollectiveClassifier) {
-                                     CollectiveClassifier c = (CollectiveClassifier) current;
-                                     c.reset();
-                                     c.setTestSet(test);
-                                }   
+                                    CollectiveClassifier c = (CollectiveClassifier) current;
+                                    c.reset();
+                                    c.setTestSet(test);
+                                }
 
                                 m_Log.statusMessage("Evaluating on test split...");
 

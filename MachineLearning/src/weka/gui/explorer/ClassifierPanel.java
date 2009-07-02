@@ -120,6 +120,8 @@ import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
+import weka.classifiers.collective.CollectiveClassifier;
+import weka.classifiers.collective.CollectiveRandomizableClassifier;
 
 /** 
  * This panel allows the user to select and configure a classifier, set the
@@ -853,14 +855,12 @@ public class ClassifierPanel
                 if (labeledInstance.classAttribute().isNominal()) {
                     if (labeledInstance.isMissing(labeledInstance.classIndex()) || Instance.isMissingValue(pred)) {
                         plotShape.addElement(new Integer(Plot2D.MISSING_SHAPE));
-                    }
-                    else {
+                    } else {
                         // otherwise set to labled point shape
                         plotShape.addElement(new Integer(Plot2D.LABEL_SHAPE));
                     }
                     plotSize.addElement(new Integer(Plot2D.LABEL_SHAPE_SIZE));
-                }
-                //这个地方我没有改动，因为我只用到分类，没有用到其他的东西
+                } //这个地方我没有改动，因为我只用到分类，没有用到其他的东西
                 else {
                     // store the error (to be converted to a point size later)
                     Double errd = null;
@@ -879,6 +879,7 @@ public class ClassifierPanel
             ex.printStackTrace();
         }
     }
+
     /**
      * Process a classifier's prediction for an instance and update a
      * set of plotting instances and additional plotting info. plotInfo
@@ -1360,9 +1361,16 @@ public class ClassifierPanel
                                     current = Classifier.makeCopy(template);
                                 } catch (Exception ex) {
                                     m_Log.logMessage("Problem copying classifier: " + ex.getMessage());
-                                }
-                                current.buildClassifier(train);
-                                eval = new Evaluation(train, costMatrix);
+                                }                         
+                            //进行了修改
+                                      current.buildClassifier(train);
+                               eval = new Evaluation(train, costMatrix);
+                                if (current instanceof CollectiveClassifier) {
+                                     CollectiveClassifier c = (CollectiveClassifier) current;
+                                     c.reset();
+                                     c.setTestSet(test);
+                                }   
+
                                 m_Log.statusMessage("Evaluating on test split...");
 
                                 if (outputPredictionsText) {
@@ -1370,13 +1378,14 @@ public class ClassifierPanel
                                 }
                                 //将训练数据也放到可显示的数据中去 ,原来是没有的，可以去掉
                                 //去掉后将不显示标记的数据
-                               //=========================================
-                                for(int l=0;l<train.numInstances();l++){
-                                    Instance labeledInstance=train.instance(l);
-                                    processLabledDataSet(labeledInstance, predInstances,plotShape,plotSize);
+                                //=========================================
+                                for (int l = 0; l < train.numInstances(); l++) {
+                                    Instance labeledInstance = train.instance(l);
+                                    processLabledDataSet(labeledInstance, predInstances, plotShape, plotSize);
                                 }
-                               //===============================================
+                                //===============================================
                                 for (int jj = 0; jj < test.numInstances(); jj++) {
+
                                     processClassifierPrediction(test.instance(jj), current,
                                             eval, predInstances, plotShape,
                                             plotSize);

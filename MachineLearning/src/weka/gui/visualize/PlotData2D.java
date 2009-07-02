@@ -194,6 +194,10 @@ public class PlotData2D {
       if (m_shapeType[i] == Plot2D.ERROR_SHAPE) {
 	m_shapeSize[i] = 3;
       }
+        //标记数据
+      if (m_shapeType[i]==Plot2D.LABEL_SHAPE){
+          m_shapeSize[i]=Plot2D.LABEL_SHAPE_SIZE;
+      }
     }
   }
 

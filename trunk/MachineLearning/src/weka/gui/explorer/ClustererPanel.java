@@ -692,6 +692,7 @@ public class ClustererPanel
       m_StopBut.setEnabled(true);
       m_ignoreBut.setEnabled(false);
       m_RunThread = new Thread() {
+                @Override
 	public void run() {
 	  // Copy the current state of things
 	  m_Log.statusMessage("Setting up...");

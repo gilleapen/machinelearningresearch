@@ -86,5 +86,5 @@ public interface Clusterer {
    * @see               Capabilities
    */
   public Capabilities getCapabilities();
-  
-}
+
+ }

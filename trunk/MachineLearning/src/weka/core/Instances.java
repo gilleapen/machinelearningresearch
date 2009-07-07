@@ -126,7 +126,47 @@ public class Instances
     dataset.copyInstances(0, this, dataset.numInstances());
     compactify();
   }
- 
+      //=============================BEGIN EDIT mbilenko==========================
+   /**
+   * Checks for nominal attributes in the dataset
+   *
+   * @return true if nominal attributes are present, false otherwise.  Class attribute
+   * is not checked (it may be nominal).
+   *
+   */
+  public boolean checkForNominalAttributes() {
+
+    int i = 0;
+
+    while (i < m_Attributes.size()) {
+      if (i != m_ClassIndex && attribute(i).isNominal()) {
+	return true;
+      }
+      i++;
+    }
+    return false;
+  }
+    //=============================END EDIT mbilenko==========================
+
+   //=============================BEGIN EDIT sugato==========================
+  /**
+   * Deletes attribute at position classIndex
+   *
+   * @author Sugato Basu
+   */
+  public void deleteClassAttribute() {
+    freshAttributeInfo();
+    m_Attributes.removeElementAt(m_ClassIndex);
+    for (int i = m_ClassIndex; i < m_Attributes.size(); i++) {
+      Attribute current = (Attribute)m_Attributes.elementAt(i);
+      current.setIndex(current.index() - 1);
+    }
+    for (int i = 0; i < numInstances(); i++) {
+      instance(i).forceDeleteAttributeAt(m_ClassIndex);
+    }
+    m_ClassIndex = -1;
+  }
+//=============================END EDIT sugato==========================
   /**
    * Reads the header of an ARFF file from a reader and 
    * reserves space for the given number of instances. Lets
@@ -294,6 +334,21 @@ public class Instances
     m_Instances.addElement(newInstance);
   }
 
+ /**2009-7-3
+   * Adds one instance to the end of the set, with given weight.
+   * Shallow copies instance before it is added. Increases the size of
+   * the dataset if it is not large enough. Does not check if the
+   * instance is compatible with the dataset.
+   *
+   * @param instance the instance to be added */
+  public final void add(Instance instance, double weight) {
+
+    Instance newInstance = (Instance)instance.copy();
+
+    newInstance.setDataset(this);
+    newInstance.setWeight(weight);
+    m_Instances.addElement(newInstance);
+  }
   /**
    * Returns an attribute.
    *

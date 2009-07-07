@@ -1520,7 +1520,27 @@ public class SMO
     
     return bias;
   }
-  
+  //新加的2009-7-3
+   /**
+   * Returns the coefficients in sparse format.  Throws an exception
+   * if there is more than one machine or if the machine is not
+   * linear.
+   */
+  public FastVector weights() throws Exception {
+
+    if (m_classifiers.length > 2) {
+      throw new Exception("More than one machine has been built.");
+    }
+    if (m_classifiers[0][1].m_sparseWeights == null) {
+      throw new Exception("No weight vector available.");
+    }
+
+    FastVector vec = new FastVector(2);
+    vec.addElement(m_classifiers[0][1].m_sparseWeights);
+    vec.addElement(m_classifiers[0][1].m_sparseIndices);
+
+    return vec;
+  }
   /*
    * Returns the number of values of the class attribute.
    */

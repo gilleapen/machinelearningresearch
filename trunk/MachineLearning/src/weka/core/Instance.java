@@ -527,7 +527,18 @@ public class Instance
       }
     }
   }
+ /**
+   * Sets the whole attribute value array
+   *
+   * @author Sugato Basu
+   * @param attIndex the attribute's index
+   * @param array the attribute value array
+   */
+  public void setValueArray(double [] array) {
 
+    freshAttributeVector();
+    m_AttValues = array;
+  }
   /**
    * Sets the class value of an instance to be "missing". A deep copy of
    * the vector of attribute values is performed before the

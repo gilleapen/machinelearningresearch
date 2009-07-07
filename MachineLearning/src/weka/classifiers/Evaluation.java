@@ -389,6 +389,37 @@ public class Evaluation
         }
         return newMatrix;
     }
+    //后来新加的2009-7-3
+/**
+   * Performs a (stratified if class is nominal) cross-validation
+   * for a classifier on a set of instances.
+   *
+   * @param classifier the classifier with any options set.
+   * @param data the data on which the cross-validation is to be
+   * performed
+   * @param numFolds the number of folds for the cross-validation
+   * @exception Exception if a classifier could not be generated
+   * successfully or the class is not defined
+   */
+  public void crossValidateModel(Classifier classifier,
+				 Instances data, int numFolds)
+    throws Exception {
+
+    // Make a copy of the data we can reorder
+    data = new Instances(data);
+    if (data.classAttribute().isNominal()) {
+      data.stratify(numFolds);
+    }
+    // Do the folds
+    for (int i = 0; i < numFolds; i++) {
+      Instances train = data.trainCV(numFolds, i);
+      setPriors(train);
+      classifier.buildClassifier(train);
+      Instances test = data.testCV(numFolds, i);
+      evaluateModel(classifier, test);
+    }
+    m_NumFolds = numFolds;
+  }
 
     /**
      * Performs a (stratified if class is nominal) cross-validation

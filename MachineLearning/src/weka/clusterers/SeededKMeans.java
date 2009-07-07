@@ -1901,17 +1901,17 @@ public class SeededKMeans extends AbstractClusterer implements OptionHandler,Sem
 	euclidean.setTrainable(false);
 
 	// phase 1 test
-	kmeans.setSeedable(false);
-	kmeans.buildClusterer(null, clusterData, theClass, data, 150);
+//	kmeans.setSeedable(false);
+//	kmeans.buildClusterer(null, clusterData, theClass, data, 150);
 
 	// phase 2 test
-	//kmeans.setSeedable(true);
-	//kmeans.buildClusterer(seeds, clusterData, theClass, data, 150);
+	kmeans.setSeedable(true);
+	kmeans.buildClusterer(seeds, clusterData, theClass, data, 150);
 
 	kmeans.getIndexClusters();
 	kmeans.printIndexClusters();
 	//	kmeans.setVerbose(true);
-	kmeans.bestInstancesForActiveLearning(50);
+//	kmeans.bestInstancesForActiveLearning(50);
       }
       else if (tempnews) {
 	//////// Text data - 3000 documents

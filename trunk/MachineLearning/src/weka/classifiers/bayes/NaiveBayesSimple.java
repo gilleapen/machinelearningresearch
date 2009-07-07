@@ -151,6 +151,18 @@ public class NaiveBayesSimple
     
     return result;
   }
+  //新加的2009-7-3
+ /** Converts an unormalized vector of logs of probabilities into a normalized
+     *   distribution that sums to one */
+    public static void normalizeLogs(double[] logProbs) {
+	// To avoid underflow problems, first scale logProbs by the maximum before
+	// converting out of log space
+	double max = logProbs[Utils.maxIndex(logProbs)];
+	for (int i = 0; i < logProbs.length; i++) {
+	    logProbs[i] = Math.exp(logProbs[i] - max);
+	}
+	Utils.normalize(logProbs);
+    }
 
   /**
    * Generates the classifier.

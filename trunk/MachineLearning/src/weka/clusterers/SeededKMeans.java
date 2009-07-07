@@ -1838,7 +1838,9 @@ public class SeededKMeans extends AbstractClusterer implements OptionHandler,Sem
     try {    
       String dataSet = new String("iris");
       //String dataSet = new String("iris");
-      if (dataSet.equals("iris")) {
+      boolean tempiris=true;
+      boolean tempnews=false;
+      if (tempiris) {
 	//////// Iris data
 	//String datafile = "/u/ml/software/weka-latest/data/iris.arff";
 	String datafile = "D:/temp/SemiSuperClusting/data/iris.arff";
@@ -1911,7 +1913,7 @@ public class SeededKMeans extends AbstractClusterer implements OptionHandler,Sem
 	//	kmeans.setVerbose(true);
 	kmeans.bestInstancesForActiveLearning(50);
       }
-      else if (dataSet.equals("news")) {
+      else if (tempnews) {
 	//////// Text data - 3000 documents
 //	String datafile = "/u/ml/data/CCSfiles/arffFromCCS/cmu-newsgroup-clean-1000_fromCCS.arff";
 	String datafile = "D:/temp/SemiSuperClusting/data/textdataset/cmu-newsgroup-clean-1000_sanitized.arff";

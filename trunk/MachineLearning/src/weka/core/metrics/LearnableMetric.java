@@ -321,16 +321,12 @@ public abstract class LearnableMetric extends Metric {
 
   /** recompute the normalizer - L1 by default; children may override */
   public void recomputeRegularizer() {
-    m_regularizerVal = m_regularizer.computeRegularizer(m_attrWeights);
-    
-//      for (int i = 0; i < m_attrWeights.length; i++) {
-//        if (m_attrWeights[i] != 0) { 
-//  	m_regularizer += 1/Math.abs(m_attrWeights[i]); 
-//  	// Removed, since this would encourage making some weights 0, which we want
-//  	//        } else {
-//  	//  	m_regularizer = Double.MAX_VALUE;
-//        }
-//      }
+      if(m_attrWeights==null){
+         return ;
+      }
+      else {
+          m_regularizerVal = m_regularizer.computeRegularizer(m_attrWeights);
+      }
   }
 
   /** get the normalizer value */
@@ -340,12 +336,14 @@ public abstract class LearnableMetric extends Metric {
 
   /** recompute the normalizer - L1 by default; children may override */
   public void recomputeNormalizer() {
-    m_normalizer = 0; 
+    m_normalizer = 0;
+    if(m_attrWeights!=null){
     for (int i = 0; i < m_attrWeights.length; i++) {
       if (m_attrWeights[i] > 0) { 
 	m_normalizer += Math.log(m_attrWeights[i]);
       } 
     }
+  }
   }
 
   

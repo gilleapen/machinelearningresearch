@@ -137,13 +137,16 @@ public abstract class LearnableMetric extends Metric {
    */
   public void resetMetric() throws Exception {
     m_trained = false;
-    if (m_attrWeights != null) { 
+    if (m_attrWeights != null) {
+
       for (int i = 0; i < m_attrWeights.length; i++) {
 	m_attrWeights[i] = 1;
       }
+       recomputeNormalizer();
+       recomputeRegularizer();
     }
-    recomputeNormalizer();
-    recomputeRegularizer();
+//    recomputeNormalizer();
+//    recomputeRegularizer();
   }
 
   /**
@@ -321,12 +324,9 @@ public abstract class LearnableMetric extends Metric {
 
   /** recompute the normalizer - L1 by default; children may override */
   public void recomputeRegularizer() {
-      if(m_attrWeights==null){
-         return ;
-      }
-      else {
+    
           m_regularizerVal = m_regularizer.computeRegularizer(m_attrWeights);
-      }
+     
   }
 
   /** get the normalizer value */

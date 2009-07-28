@@ -36,8 +36,14 @@ public class RobustPathSpectralClustering extends CollectiveRandomizableClassifi
     protected Instances m_TrainsetNew;
     /** copy of the original test dataset */
     protected Instances m_TestsetNew;
-    protected ExpDistance expDis;
+    protected ExpDistance expDis = new ExpDistance();
     private double sigma = 0.43;
+    /** 在S集合中找最相似的*/
+    private double maxSimilarity = 0.0;
+    /** 在D集合中找最不相似的*/
+    private double minSimilarity = -1.0;
+    /**保存结果*/
+    private Matrix m_resultMatrix;
 
     public void setExpDis(ExpDistance expDis) {
         this.expDis = expDis;
@@ -51,16 +57,38 @@ public class RobustPathSpectralClustering extends CollectiveRandomizableClassifi
     protected double[] getDistribution(Instance instance) throws Exception {
         throw new UnsupportedOperationException("Not supported yet.");
     }
+
     /**
      * 在相似集合S中寻找相似度最大相似度。
+     * S集合实际由给定的类标记中相同类别的数据对组成（x,y）,
      * @param trainInstances
      * @return
      */
-    private double getMaxSimilarityInS(Instances trainInstances){
-        
-        double maxSimilarity=0.0;
-        
-        return  maxSimilarity;
+    private void computeMaxMinSimilarity(Instances trainInstances) {
+
+        int num = trainInstances.numInstances();
+
+
+
+        int indexClass = trainInstances.classIndex();
+        for (int i = 0; i < num; i++) {
+            Instance first = trainInstances.instance(i);
+            for (int j = 0; j < num; j++) {
+                Instance second = trainInstances.instance(j);
+                //如果两个数据都是标记的数据,并且两个数据的类标记一样,且不是同一个样本，S集合
+                if ((!first.classIsMissing()) & !(second.classIsMissing()) & (first.classValue() == second.classValue()) & (i != j)) {
+                    if (maxSimilarity < expDis.distance(first, second)) {
+                        maxSimilarity = expDis.distance(first, second);
+                    }
+                }
+                //如果两个数据都是标记的数据,并且两个数据的类标记不一一样,且不是同一个样本，D集合
+                if ((!first.classIsMissing()) & !(second.classIsMissing()) & (first.classValue() != second.classValue()) & (i != j)) {
+                    if (minSimilarity > expDis.distance(first, second)) {
+                        minSimilarity = expDis.distance(first, second);
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -72,6 +100,8 @@ public class RobustPathSpectralClustering extends CollectiveRandomizableClassifi
 
         int num = trainInstances.numInstances();
         expDis.setSigma(sigma);
+        //在S和D集合中分别计算相似度最大和最小值
+        computeMaxMinSimilarity(trainInstances);
         Matrix similarityMatrix = new Matrix(num, num);
         int indexClass = trainInstances.classIndex();
         for (int i = 0; i < num; i++) {
@@ -80,12 +110,13 @@ public class RobustPathSpectralClustering extends CollectiveRandomizableClassifi
                 Instance second = trainInstances.instance(j);
                 //如果两个数据都是未标记的数据
                 if ((!first.classIsMissing()) & !(second.classIsMissing())) {
-
-                    double dis = 0.0;
-                    similarityMatrix.set(i, j, dis);
-
-                }
-                //不在以标记点中，（即不在相似S和不相似D集合中，先前给定的标记信息）
+                    if (first.classValue() == second.classValue())//同一类
+                    {
+                        similarityMatrix.set(i, j, maxSimilarity);
+                    } else {
+                        similarityMatrix.set(i, j, minSimilarity);//不同类
+                    }
+                } //不在以标记点中，（即不在相似S和不相似D集合中）
                 else {
                     if (i == j) {
                         double dis = 0.0;
@@ -96,10 +127,28 @@ public class RobustPathSpectralClustering extends CollectiveRandomizableClassifi
                         similarityMatrix.set(i, j, dis);
                     }
                 }
-
-
             }
         }
+    }
+
+    /**
+     *
+     * @throws java.lang.Exception
+     */
+    public void init() throws Exception {
+        //创建图；
+        //建立用来寻找最短路劲的图
+        int numInst = m_TrainsetNew.numInstances();
+        int numClass = m_TrainsetNew.numClasses();
+        int[] nodes = new int[numInst];
+
+        for (int i = 0; i < numInst; i++) {
+            nodes[i] = i;
+        }
+        createSimilarityMatrix(m_TrainsetNew);
+        //直接将未标记样本的终类别存入结果中,初始类别都为-1.0
+        m_resultMatrix = new Matrix(numInst, 1, -1.0);
+
     }
 
     @Override

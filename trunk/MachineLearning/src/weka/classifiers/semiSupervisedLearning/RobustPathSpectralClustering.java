@@ -16,6 +16,7 @@ import weka.core.Instances;
 import weka.core.SelectedTag;
 import weka.core.TechnicalInformation;
 import weka.core.TechnicalInformationHandler;
+import weka.core.matrix.EigenvalueDecomposition;
 import weka.core.matrix.Matrix;
 import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.NominalToBinary;
@@ -90,7 +91,45 @@ public class RobustPathSpectralClustering extends CollectiveRandomizableClassifi
             }
         }
     }
+    Matrix computeMatrixY(Matrix MatrixL,int dim){
 
+        int row=MatrixL.getRowDimension();
+        Matrix MatrixY=new Matrix(row,dim);
+        //获取特征向量和特征值
+        EigenvalueDecomposition eigDec=MatrixL.eig();
+        Matrix eigV=eigDec.getV();
+        double[] eigvalues=eigDec.getRealEigenvalues();
+
+        return MatrixY;
+    }
+    Matrix computeMatrixL(Matrix similarityMatrix, Matrix MatrixD)
+    {
+       int num=similarityMatrix.getColumnDimension();
+        Matrix MatrixL=new Matrix(num,num);
+        Matrix Temp=null;
+        Temp=MatrixD.sqrt().inverse();
+        MatrixL =Temp.times(similarityMatrix).times(Temp);
+        return MatrixL;
+    }
+    /**
+     * 计算D矩阵
+     * @param similarityMatrix
+     * @return
+     */
+Matrix computeMatrixD(Matrix similarityMatrix){
+    int num=similarityMatrix.getColumnDimension();
+    Matrix MatrixD=new Matrix(num, num);
+    double sum=0.0;
+    for(int i=0;i<num;i++){
+           sum = 0.0;
+        for(int j=0;j<num;j++)
+        {
+            sum+=similarityMatrix.get(i, j);
+        }
+           MatrixD.set(i, i, sum);
+    }
+    return  MatrixD;
+}
     /**
      * 定义训练集中的相似矩阵
      * @param trainInstances 包含有标记的样本和未标记的样本

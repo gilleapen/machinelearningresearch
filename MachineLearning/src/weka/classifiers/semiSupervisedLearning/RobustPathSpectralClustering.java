@@ -68,9 +68,6 @@ public class RobustPathSpectralClustering extends CollectiveRandomizableClassifi
     private void computeMaxMinSimilarity(Instances trainInstances) {
 
         int num = trainInstances.numInstances();
-
-
-
         int indexClass = trainInstances.classIndex();
         for (int i = 0; i < num; i++) {
             Instance first = trainInstances.instance(i);
@@ -91,45 +88,84 @@ public class RobustPathSpectralClustering extends CollectiveRandomizableClassifi
             }
         }
     }
-    Matrix computeMatrixY(Matrix MatrixL,int dim){
+    //2009-7-30接着改，将Y矩阵的数据转成Instances 一遍使用kmeans
+//Instances MatrixYtoInstances(Matrix MatrixY)throws Exception{
+////    Instance inst=new Instance(1.0, MatrixY.getRowPackedCopy());
+////    Instances yInstances=new Instances();
+//}
 
-        int row=MatrixL.getRowDimension();
-        Matrix MatrixY=new Matrix(row,dim);
+    /**
+     *  计算Y矩阵，可以
+     * @param MatrixL
+     * @param dim
+     * @return
+     */
+    Matrix computeMatrixY(Matrix MatrixL, int dim) {
+
+        int row = MatrixL.getRowDimension();
+        Matrix MatrixX = new Matrix(row, dim);
+        Matrix MatrixY = new Matrix(row, dim);
         //获取特征向量和特征值
-        EigenvalueDecomposition eigDec=MatrixL.eig();
-        Matrix eigV=eigDec.getV();
-        double[] eigvalues=eigDec.getRealEigenvalues();
+        EigenvalueDecomposition eigDec = MatrixL.eig();
+        Matrix eigV = eigDec.getV();
+        for (int i = 0; i < row; i++) {
+            for (int j = 0; j < dim; j++) {
+                MatrixX.set(i, j, eigV.get(i, j));
+            }
+        }
+        double[] eigvalues = eigDec.getRealEigenvalues();
+        for (int i = 0; i < row; i++) {
+            double sum = 0.0;
+            for (int j = 0; j < dim; j++) {
+
+                double ijvalue = MatrixX.get(i, j);
+                sum += ijvalue * ijvalue;
+
+            }
+            double sumsqrt = Math.sqrt(sum);
+            for (int k = 0; k < dim; k++) {
+                MatrixY.set(i, k, eigV.get(i, k) / sumsqrt);
+            }
+        }
 
         return MatrixY;
     }
-    Matrix computeMatrixL(Matrix similarityMatrix, Matrix MatrixD)
-    {
-       int num=similarityMatrix.getColumnDimension();
-        Matrix MatrixL=new Matrix(num,num);
-        Matrix Temp=null;
-        Temp=MatrixD.sqrt().inverse();
-        MatrixL =Temp.times(similarityMatrix).times(Temp);
+
+    /**
+     * 计算L矩阵
+     * @param similarityMatrix
+     * @param MatrixD
+     * @return
+     */
+    Matrix computeMatrixL(Matrix similarityMatrix, Matrix MatrixD) {
+        int num = similarityMatrix.getColumnDimension();
+        Matrix MatrixL = new Matrix(num, num);
+        Matrix Temp = null;
+        Temp = MatrixD.sqrt().inverse();
+        MatrixL = Temp.times(similarityMatrix).times(Temp);
         return MatrixL;
     }
+
     /**
      * 计算D矩阵
      * @param similarityMatrix
      * @return
      */
-Matrix computeMatrixD(Matrix similarityMatrix){
-    int num=similarityMatrix.getColumnDimension();
-    Matrix MatrixD=new Matrix(num, num);
-    double sum=0.0;
-    for(int i=0;i<num;i++){
-           sum = 0.0;
-        for(int j=0;j<num;j++)
-        {
-            sum+=similarityMatrix.get(i, j);
+    Matrix computeMatrixD(
+            Matrix similarityMatrix) {
+        int num = similarityMatrix.getColumnDimension();
+        Matrix MatrixD = new Matrix(num, num);
+        double sum = 0.0;
+        for (int i = 0; i < num; i++) {
+            sum = 0.0;
+            for (int j = 0; j < num; j++) {
+                sum += similarityMatrix.get(i, j);
+            }
+            MatrixD.set(i, i, sum);
         }
-           MatrixD.set(i, i, sum);
+        return MatrixD;
     }
-    return  MatrixD;
-}
+
     /**
      * 定义训练集中的相似矩阵
      * @param trainInstances 包含有标记的样本和未标记的样本

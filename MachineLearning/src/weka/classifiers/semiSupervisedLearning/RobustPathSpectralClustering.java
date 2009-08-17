@@ -9,7 +9,10 @@ import java.util.Arrays;
 import java.util.Enumeration;
 import weka.classifiers.collective.CollectiveRandomizableClassifier;
 import weka.classifiers.functions.SMO;
+import weka.clusterers.SimpleKMeans;
+import weka.core.Attribute;
 import weka.core.ExpDistance;
+import weka.core.FastVector;
 import weka.core.Instance;
 import weka.core.InstanceComparator;
 import weka.core.Instances;
@@ -45,6 +48,11 @@ public class RobustPathSpectralClustering extends CollectiveRandomizableClassifi
     private double minSimilarity = -1.0;
     /**保存结果*/
     private Matrix m_resultMatrix;
+    /**k类*/
+    int k = 3;
+    /**降维后且将Y转换成Instances类型*/
+    Instances YInstances;
+    Matrix similarityMatrix = null;
 
     public void setExpDis(ExpDistance expDis) {
         this.expDis = expDis;
@@ -88,11 +96,31 @@ public class RobustPathSpectralClustering extends CollectiveRandomizableClassifi
             }
         }
     }
-    //2009-7-30接着改，将Y矩阵的数据转成Instances 一遍使用kmeans
-//Instances MatrixYtoInstances(Matrix MatrixY)throws Exception{
-////    Instance inst=new Instance(1.0, MatrixY.getRowPackedCopy());
-////    Instances yInstances=new Instances();
-//}
+    //2009-7-30接着改，将Y矩阵的数据转成Instances 以便使用kmeans
+
+    void MatrixYtoInstances(Matrix MatrixY) throws Exception {
+        int column = MatrixY.getColumnDimension();
+        int row = MatrixY.getRowDimension();
+
+        FastVector attributes = new FastVector(column);
+        for (int i = 0; i < column; i++) {
+            attributes.addElement(new Attribute("att" + i, (FastVector) null));
+        }
+        String name = "YInstances";
+        //声明一个YInstances
+         YInstances = new Instances(name, attributes, row);
+
+        double temp[] = new double[row];
+        for (int i = 0; i < row; i++) {
+            for (int j = 0; j < column; j++) {
+                temp[j] = MatrixY.get(i, j);
+            }
+            Instance inst = new Instance(1.0, temp);
+
+            YInstances.add(inst);
+        }
+       
+    }
 
     /**
      *  计算Y矩阵，可以
@@ -177,7 +205,7 @@ public class RobustPathSpectralClustering extends CollectiveRandomizableClassifi
         expDis.setSigma(sigma);
         //在S和D集合中分别计算相似度最大和最小值
         computeMaxMinSimilarity(trainInstances);
-        Matrix similarityMatrix = new Matrix(num, num);
+        similarityMatrix = new Matrix(num, num);
         int indexClass = trainInstances.classIndex();
         for (int i = 0; i < num; i++) {
             Instance first = trainInstances.instance(i);
@@ -207,6 +235,35 @@ public class RobustPathSpectralClustering extends CollectiveRandomizableClassifi
     }
 
     /**
+     * k个聚类
+     * @param k
+     */
+    void setK(int k) {
+        this.k = k;
+    }
+
+    public int getK() {
+        return k;
+    }
+ /**
+     * generates copies of the original datasets and also builds a relation
+     * (hashtable) between each original instance and new instance. This is
+     * necessary to retrieve the determined class value in the
+     * <code>getDistribution(Instance)</code> method.
+     *
+     * @see   #getDistribution(Instance)
+     * @throws Exception if anything goes wrong
+     */
+    @Override
+    protected void generateSets() throws Exception {
+        super.generateSets();
+//利用父类的成员变量
+        m_Data = new RobustPathSpectralClusteringInstances(this, m_Trainset, m_Testset);
+       //貌似是合并后的数据确实
+        m_TrainsetNew = m_Data.getTrainSet();
+        m_TestsetNew = null;
+    }
+    /**
      *
      * @throws java.lang.Exception
      */
@@ -221,6 +278,12 @@ public class RobustPathSpectralClustering extends CollectiveRandomizableClassifi
             nodes[i] = i;
         }
         createSimilarityMatrix(m_TrainsetNew);
+        Matrix MatrixD = computeMatrixD(
+                similarityMatrix);
+        Matrix MatrixL = computeMatrixL(similarityMatrix, MatrixD);
+        Matrix MatrixY = computeMatrixY(MatrixL, k);
+        //将Y矩阵转换成Instances格式后，便于用kmeans算法。
+        MatrixYtoInstances(MatrixY);
         //直接将未标记样本的终类别存入结果中,初始类别都为-1.0
         m_resultMatrix = new Matrix(numInst, 1, -1.0);
 
@@ -228,12 +291,14 @@ public class RobustPathSpectralClustering extends CollectiveRandomizableClassifi
 
     @Override
     protected void buildClassifier() throws Exception {
-        throw new UnsupportedOperationException("Not supported yet.");
+        SimpleKMeans kmeans=new SimpleKMeans();
+        kmeans.buildClusterer(YInstances);
     }
 
     @Override
     protected void build() throws Exception {
-        throw new UnsupportedOperationException("Not supported yet.");
+        init();
+        buildClassifier();
     }
 
     /**

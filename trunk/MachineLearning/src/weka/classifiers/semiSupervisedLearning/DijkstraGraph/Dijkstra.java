@@ -17,6 +17,7 @@ package weka.classifiers.semiSupervisedLearning.DijkstraGraph;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
+import weka.core.Instances;
 
 public class Dijkstra {
 
@@ -24,7 +25,7 @@ public class Dijkstra {
     public static final double INF = Double.MAX_VALUE; //infinity
     private int NUM_VERTICES = 8;
     /*保存最短路径*/
-    Stack<Integer> m_shortestPath = new Stack<Integer>();
+    ArrayList<Integer> m_shortestPath = new ArrayList<Integer>();
     /*最短路径的距离之和*/
     double m_costPathDistance = 0.0;
     //now define the cities
@@ -37,14 +38,11 @@ public class Dijkstra {
     public static final int PVD = 6;
     public static final int MIA = 7;
     private int nonexistent = 8;
-
     //start and end vertices
     private int FIRST_VERTEX = HNL;
     private int LAST_VERTEX = MIA;
-
     //list of names of cities, for output
     // private String[] name = {"HNL", "SFO", "LAX", "ORD", "DFW", "LGA", "PVD", "MIA"};
-
     //now the initial distance matrix ("weight")
 //    private double weight[][] = {
 //        /* HNL    SFO     LAX     ORD     DFW     LGA     PVD     MIA */
@@ -198,13 +196,68 @@ public class Dijkstra {
         m_sigma = sigma;
     }
 
+    public void adaptCostDistance() {
+    }
+
+    public boolean getShortPath(int origin, int destination) throws IOException {
+        assert (origin != nonexistent && destination != nonexistent);
+//        dijkstra(origin);
+
+        //System.out.println("The shortest path from " + name[origin] + " to " + name[destination] + " is:\n");
+
+        Stack<Integer> st = new Stack<Integer>();
+
+        for (int v = destination; v != origin; v = predecessor[v]) {
+            if (v == nonexistent) {
+                // writer.write("non-existentshortest path(graph non-connected) " + origin + " to " + destination + " \n");
+                return false;
+            } else {
+                st.push(v);
+            }
+        }
+        st.push(origin);
+        //加入到最短路径成员当中去
+        while (!st.empty()) {
+            int current = st.pop();
+            m_shortestPath.add(current);
+        }
+        return true;
+    }
+
+    double computeAdaptSigma(ArrayList<Integer> shortestPath) {
+        double sigma = 1.0;
+        if (shortestPath.isEmpty()) {
+            System.out.println("shortestPath is Empty!");
+            return sigma;
+        } else {
+            double sum = 0.0;
+            double mean = 0.0;
+            double variance = 0.0;
+            for (int i = 0; i < shortestPath.size(); i++) {
+                sum = sum + shortestPath.get(i);
+            }
+            mean = sum / (double) (shortestPath.size());
+
+            for (int i = 0; i < shortestPath.size(); i++) {
+                double temp = shortestPath.get(i);
+                variance = variance + (temp - mean) * (temp - mean);
+            }
+            sigma = variance;
+
+            return sigma;
+
+        }
+    }
+
     /**
      * 测试用，将最短路径写入文件
      * @param origin
      * @param destination
      * @param writer
+     * @param trainsetNew// 加入这个参数的目的是为了验证每条最短路径上的所有标记点的
+     * 类标记是否一致。
      */
-    public boolean writePath(int origin, int destination, FileWriter writer) throws IOException {
+    public boolean writePath(int origin, int destination, FileWriter writer, Instances trainsetNew) throws IOException {
 
         assert (origin != nonexistent && destination != nonexistent);
 //        dijkstra(origin);
@@ -227,6 +280,14 @@ public class Dijkstra {
         //   m_shortestPath=st;
         //前一个
         int prev = st.pop();
+
+        double afterclass = -2;
+        double prevclass = -2;
+        //源点的类标记；应该是没有的
+        if (!trainsetNew.instance(prev).classIsMissing()) {
+            prevclass = trainsetNew.instance(prev).classValue();
+        }
+
         double shortestDistance = 0.;
         double expdistance = 0.0;
         // 将源写入文件
@@ -235,13 +296,22 @@ public class Dijkstra {
             // System.out.print(name[st.pop()] + " -> ");
             //后一个
             int after = st.pop();
+            if (!trainsetNew.instance(after).classIsMissing()) {
+                afterclass = trainsetNew.instance(after).classValue();
+            }
             double dis = weight[prev][after];
             shortestDistance += dis;
             //代价距离
             expdistance += costDistance(dis);
             prev = after;// 后面的变成前面的
+            prevclass = afterclass;//后面的变成前面的类标记
 
-        // writer.write(prev + " -> ");
+            // writer.write(prev + " -> ");
+        }
+        if (prevclass != afterclass)//存在类标记不一致的路径
+        {
+            m_costPathDistance = Double.POSITIVE_INFINITY;
+            System.out.println("这条最短路路径上存在类标记不同的数据点！");
         }
         m_costPathDistance = expdistance;
         //  writer.write("dis=" + shortestDistance + " expdis" + expdistance + " ");
@@ -259,7 +329,7 @@ public class Dijkstra {
     public void printShortestPath(int origin, int destination) {
 
         assert (origin != nonexistent && destination != nonexistent);
-       // dijkstra(origin);
+        // dijkstra(origin);
 
         //System.out.println("The shortest path from " + name[origin] + " to " + name[destination] + " is:\n");
         System.out.println("The shortest path from " + origin + " to " + destination + " is:\n");
@@ -321,7 +391,7 @@ public class Dijkstra {
                 if (i != source) {
                     dijkstra.printShortestPath(source, i);
                 }
-            //   dijkstra.
+                //   dijkstra.
             }
         }
     }

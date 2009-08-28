@@ -198,7 +198,7 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
                         //dijkstra.printShortestPath(source, target);
                         //有路径才写入文件
 
-                        if (dijkstra.writePath(source, target, writer)) {
+                        if (dijkstra.writePath(source, target, writer,m_TrainsetNew)) {
                             //获得目的节点的类标记
                             double targetClass = m_TrainsetNew.instance(target).classValue();
                             String str = Double.toString(targetClass);

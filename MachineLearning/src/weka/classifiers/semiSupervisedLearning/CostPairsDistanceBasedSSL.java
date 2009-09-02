@@ -137,6 +137,7 @@ public class CostPairsDistanceBasedSSL extends CollectiveRandomizableClassifier 
      */
     void initWeightGraph(int NUM_VERTICES) {
         weightGraph = new double[NUM_VERTICES][NUM_VERTICES];
+        PairsweightGraph=new double[NUM_VERTICES][NUM_VERTICES];
         for (int i = 0; i < NUM_VERTICES; i++) {
             for (int j = 0; j < NUM_VERTICES; j++) {
                 weightGraph[i][j] = INF;
@@ -183,17 +184,17 @@ public class CostPairsDistanceBasedSSL extends CollectiveRandomizableClassifier 
      * 保持局部特性。
      * @param weightGraph
      */
-    void createPairsweightGraph(double weightGraph[][]) {
+    void createPairsweightGraph(double weightGraph[][]) throws Exception{
         int rownum = weightGraph.length;
         int colunum = weightGraph[0].length;
         for (int i = 0; i < rownum; i++) {
             double sumdistancei = 0.0;
             int countknni = 1;
-            for (int k = 0; k < rownum; k++)//i的邻域距离累加
+            for (int n = 0; n < rownum; n++)//i的邻域距离累加
             {
-                if (weightGraph[i][k] != INF)//实际上在这里就是i的邻域点
+                if (weightGraph[i][n] != INF)//实际上在这里就是i的邻域点
                 {
-                    sumdistancei += weightGraph[i][k];
+                    sumdistancei += weightGraph[i][n];
                     countknni++;
                 }
             }

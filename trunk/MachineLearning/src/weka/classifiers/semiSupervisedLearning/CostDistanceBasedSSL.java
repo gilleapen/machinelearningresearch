@@ -54,6 +54,7 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
     //define some constants
     public static final double INF = Double.MAX_VALUE; //infinity
     private double weightGraph[][];
+    private double PairsweightGraph[][];
     /*保存结果*/
     Matrix m_resultMatrix;
     private double m_sigma = 0.01;
@@ -74,12 +75,13 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
         m_resultMatrix = null;
         weightGraph = null;
     }
-/**
- * 得到一个实例的最终类分布
- * @param instance
- * @return
- * @throws java.lang.Exception
- */
+
+    /**
+     * 得到一个实例的最终类分布
+     * @param instance
+     * @return
+     * @throws java.lang.Exception
+     */
     @Override
     protected double[] getDistribution(Instance instance) throws Exception {
         int index;
@@ -141,7 +143,7 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
     }
 
     /**
-     * 构建邻域图
+     * 构建邻域图，实际上已经是有向图了
      * @param trainNew 数据集
      * @param k 近邻数目
      * @throws java.lang.Exception
@@ -173,12 +175,56 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
 
     }
 
+    /**
+     * 
+     * 将邻域图两点的距离改成两个点各自邻域点内距离之和的差
+     * 保持局部特性。
+     * @param weightGraph
+     */
+    void createPairsweightGraph(double weightGraph[][]) {
+        int rownum = weightGraph.length;
+        int colunum = weightGraph[0].length;
+        for (int i = 0; i < rownum; i++) {
+            double sumdistancei = 0.0;
+            int countknni = 1;
+            for (int k = 0; k < rownum; k++)//i的邻域距离累加
+            {
+                if (weightGraph[i][k] != INF)//实际上在这里就是i的邻域点
+                {
+                    sumdistancei += weightGraph[i][k];
+                    countknni++;
+                }
+            }
+            //将距离求平均
+            sumdistancei = sumdistancei / (double) countknni;
+            for (int j = 0; j < colunum; j++) {
+
+                double sumdistancj = 0.0;
+                int countknnj = 1;
+                for (int m = 0; m < rownum; m++) {
+                    if (weightGraph[j][m] != INF)//实际上在这里就是j的邻域点
+                    {
+                        sumdistancj += weightGraph[j][m];
+                        countknnj++;
+                    }
+
+
+                }
+                sumdistancj = sumdistancj / (double) countknnj;
+                double pairsdistance = Math.abs(sumdistancj - sumdistancei);
+                PairsweightGraph[i][j] = sumdistancj;
+
+            }
+        }
+
+    }
+
     @Override
     protected void buildClassifier() throws Exception {
 
         int numlabled = 0;
         //String fileString="C:\\test.txt"
-       FileWriter writer = new FileWriter("C:\\test.txt", true);
+        FileWriter writer = new FileWriter("C:\\test.txt", true);
         Dijkstra dijkstra = new Dijkstra(weightGraph);
         //扩大代价距离的影响，设置sigma
         dijkstra.setSigma(m_sigma);
@@ -198,11 +244,11 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
                         //dijkstra.printShortestPath(source, target);
                         //有路径才写入文件
 
-                        if (dijkstra.writePath(source, target, writer,m_TrainsetNew)) {
+                        if (dijkstra.writePath(source, target, writer, m_TrainsetNew)) {
                             //获得目的节点的类标记
                             double targetClass = m_TrainsetNew.instance(target).classValue();
                             String str = Double.toString(targetClass);
-                           // writer.write("Class " + str + "\n");
+                            // writer.write("Class " + str + "\n");
                             //获得最短路径的代价距离和
                             double tempcost = dijkstra.getCostPathDistance();
                             // 找最短路径集中的最短的路径和代价和
@@ -226,7 +272,7 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
             }
 
         }
-       writer.close();
+        writer.close();
     }
 
     /**
@@ -440,7 +486,7 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
                 m_Unprocessed[train.numInstances() + i] = test.instance(i);
             }
             //把所有的数据集所有的数据都进行了排序！
-              Arrays.sort(m_Unprocessed, m_Comparator);
+            Arrays.sort(m_Unprocessed, m_Comparator);
 
             // filter data，这个时候trainset才有值
             m_Trainset = new Instances(train, 0);

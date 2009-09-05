@@ -176,6 +176,28 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
     }
 
     /**
+     * 计算自适应的sigma =最小距离。
+     * @param weightGraph
+     * @return
+     */
+    double computeAdaptSigma(double[][] weightGraph) {
+        double sigma = 0.01;
+        double min = INF;
+        for (int i = 0; i < weightGraph.length; i++) {
+            for (int j = 0; j < weightGraph[0].length; j++) {
+                if (weightGraph[i][j] < min && weightGraph[i][j] != 0) {
+                    min = weightGraph[i][j];
+                }
+            }
+        }
+        //把最小值作为sigma
+        if (min > 0 && min < INF) {
+            sigma = min;
+        }
+        return sigma;
+    }
+
+    /**
      * 
      * 将邻域图两点的距离改成两个点各自邻域点内距离之和的差
      * 保持局部特性。
@@ -226,8 +248,10 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
         //String fileString="C:\\test.txt"
         FileWriter writer = new FileWriter("C:\\test.txt", true);
         Dijkstra dijkstra = new Dijkstra(weightGraph);
+        double sigma = computeAdaptSigma(weightGraph);
         //扩大代价距离的影响，设置sigma
-        dijkstra.setSigma(m_sigma);
+//        dijkstra.setSigma(m_sigma);
+        dijkstra.setSigma(sigma);
         //对未标记样本中的每一数据寻找到标记样本数据集合的最短路径。
         for (int unLabel = 0; unLabel < m_TrainsetNew.numInstances(); unLabel++) {
             if (m_TrainsetNew.instance(unLabel).classIsMissing())//未标记数据

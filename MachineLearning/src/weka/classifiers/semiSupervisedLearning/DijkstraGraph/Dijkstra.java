@@ -224,30 +224,32 @@ public class Dijkstra {
         return true;
     }
 
-    double computeAdaptSigma(ArrayList<Integer> shortestPath) {
-        double sigma = 1.0;
-        if (shortestPath.isEmpty()) {
-            System.out.println("shortestPath is Empty!");
-            return sigma;
-        } else {
-            double sum = 0.0;
-            double mean = 0.0;
-            double variance = 0.0;
-            for (int i = 0; i < shortestPath.size(); i++) {
-                sum = sum + shortestPath.get(i);
-            }
-            mean = sum / (double) (shortestPath.size());
 
-            for (int i = 0; i < shortestPath.size(); i++) {
-                double temp = shortestPath.get(i);
-                variance = variance + (temp - mean) * (temp - mean);
-            }
-            sigma = variance;
 
-            return sigma;
-
-        }
-    }
+//    double computeAdaptSigma(ArrayList<Integer> shortestPath) {
+//        double sigma = 1.0;
+//        if (shortestPath.isEmpty()) {
+//            System.out.println("shortestPath is Empty!");
+//            return sigma;
+//        } else {
+//            double sum = 0.0;
+//            double mean = 0.0;
+//            double variance = 0.0;
+//            for (int i = 0; i < shortestPath.size(); i++) {
+//                sum = sum + shortestPath.get(i);
+//            }
+//            mean = sum / (double) (shortestPath.size());
+//
+//            for (int i = 0; i < shortestPath.size(); i++) {
+//                double temp = shortestPath.get(i);
+//                variance = variance + (temp - mean) * (temp - mean);
+//            }
+//            sigma = variance;
+//
+//            return sigma;
+//
+//        }
+//    }
 
     /**
      * 测试用，将最短路径写入文件

@@ -5,6 +5,7 @@
 package weka.classifiers.semiSupervisedLearning.DijkstraGraph;
 
 import java.util.Enumeration;
+import weka.core.DistanceFunction;
 import weka.core.EuclideanDistance;
 import weka.core.Instance;
 import weka.core.Instances;
@@ -30,10 +31,11 @@ public class KnnGraph {
      * 计算k近邻
      * @param instance
      */
- public   void computeKnn(Instance instance) {
+ public   void computeKnn(Instance instance,DistanceFunction function) {
         Enumeration e = m_dataset.enumerateInstances();
-        EuclideanDistance function = new EuclideanDistance(m_dataset);
+       // EuclideanDistance function = new EuclideanDistance(m_dataset);
         int num = m_dataset.numInstances();
+        function.setInstances(m_dataset);
         // 将与其他实力的所有点的距离都计算一遍，并保存索引和距离
         KnnInfor allInfor[] = new KnnInfor[num];
         //计算与所有的实例的距离

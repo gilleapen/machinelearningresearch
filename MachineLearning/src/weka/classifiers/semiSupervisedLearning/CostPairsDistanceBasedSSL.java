@@ -13,6 +13,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.Vector;
 import weka.classifiers.collective.CollectiveRandomizableClassifier;
 import weka.classifiers.collective.util.Splitter;
 import weka.classifiers.functions.SMO;
@@ -22,12 +23,15 @@ import weka.classifiers.semiSupervisedLearning.DijkstraGraph.KnnInfor;
 import weka.classifiers.semiSupervisedLearning.dijkstra.Side;
 import weka.core.Capabilities;
 import weka.core.Capabilities.Capability;
+import weka.core.DistanceFunction;
+import weka.core.EuclideanDistance;
 import weka.core.Instance;
 import weka.core.InstanceComparator;
 import weka.core.Instances;
 import weka.core.SelectedTag;
 import weka.core.TechnicalInformation;
 import weka.core.TechnicalInformationHandler;
+import weka.core.Utils;
 import weka.core.matrix.Matrix;
 import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.NominalToBinary;
@@ -60,7 +64,7 @@ public class CostPairsDistanceBasedSSL extends CollectiveRandomizableClassifier 
     /*保存结果*/
     Matrix m_resultMatrix;
     private double m_sigma = 0.01;
-
+    private DistanceFunction  m_DistanceFunction=new EuclideanDistance();
     /**
      * performs initialization of members
      */
@@ -76,6 +80,7 @@ public class CostPairsDistanceBasedSSL extends CollectiveRandomizableClassifier 
         m_Data = null;
         m_resultMatrix = null;
         weightGraph = null;
+
     }
 
     /**
@@ -164,7 +169,7 @@ public class CostPairsDistanceBasedSSL extends CollectiveRandomizableClassifier 
         KnnGraph kgraph = new KnnGraph(trainNew, k);
         for (int i = 0; i < numInst; i++) {
             Instance inst = trainNew.instance(i);
-            kgraph.computeKnn(inst);
+          kgraph.computeKnn(inst, m_DistanceFunction);
             //得到邻域的索引和相应距离          
             KnnInfor knn[] = kgraph.getKnnInfor();
             //非对称图，对角线为0
@@ -178,8 +183,8 @@ public class CostPairsDistanceBasedSSL extends CollectiveRandomizableClassifier 
     createPairsweightGraph(weightGraph);
     }
 
-    /**
-     * 
+  /**
+     *
      * 将邻域图两点的距离改成两个点各自邻域点内距离之和的差
      * 保持局部特性。
      * @param weightGraph
@@ -189,7 +194,7 @@ public class CostPairsDistanceBasedSSL extends CollectiveRandomizableClassifier 
         int colunum = weightGraph[0].length;
         for (int i = 0; i < rownum; i++) {
             double sumdistancei = 0.0;
-            int countknni = 1;
+            int countknni = 0;
             for (int n = 0; n < rownum; n++)//i的邻域距离累加
             {
                 if (weightGraph[i][n] != INF)//实际上在这里就是i的邻域点
@@ -203,7 +208,7 @@ public class CostPairsDistanceBasedSSL extends CollectiveRandomizableClassifier 
             for (int j = 0; j < colunum; j++) {
 
                 double sumdistancj = 0.0;
-                int countknnj = 1;
+                int countknnj = 0;
                 for (int m = 0; m < rownum; m++) {
                     if (weightGraph[j][m] != INF)//实际上在这里就是j的邻域点
                     {
@@ -215,7 +220,7 @@ public class CostPairsDistanceBasedSSL extends CollectiveRandomizableClassifier 
                 }
                 sumdistancj = sumdistancj / (double) countknnj;
                 double pairsdistance = Math.abs(sumdistancj - sumdistancei);
-                PairsweightGraph[i][j] = sumdistancj;
+                PairsweightGraph[i][j] = pairsdistance;
 
             }
         }

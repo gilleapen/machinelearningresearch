@@ -13,6 +13,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.Vector;
 import weka.classifiers.collective.CollectiveRandomizableClassifier;
 import weka.classifiers.collective.util.Splitter;
 import weka.classifiers.functions.SMO;
@@ -22,12 +23,15 @@ import weka.classifiers.semiSupervisedLearning.DijkstraGraph.KnnInfor;
 import weka.classifiers.semiSupervisedLearning.dijkstra.Side;
 import weka.core.Capabilities;
 import weka.core.Capabilities.Capability;
+import weka.core.DistanceFunction;
+import weka.core.EuclideanDistance;
 import weka.core.Instance;
 import weka.core.InstanceComparator;
 import weka.core.Instances;
 import weka.core.SelectedTag;
 import weka.core.TechnicalInformation;
 import weka.core.TechnicalInformationHandler;
+import weka.core.Utils;
 import weka.core.matrix.Matrix;
 import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.NominalToBinary;
@@ -58,7 +62,7 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
     /*保存结果*/
     Matrix m_resultMatrix;
     private double m_sigma = 0.01;
-
+private DistanceFunction  m_DistanceFunction=new EuclideanDistance();
     /**
      * performs initialization of members
      */
@@ -161,7 +165,7 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
         KnnGraph kgraph = new KnnGraph(trainNew, k);
         for (int i = 0; i < numInst; i++) {
             Instance inst = trainNew.instance(i);
-            kgraph.computeKnn(inst);
+            kgraph.computeKnn(inst,m_DistanceFunction);
             //得到邻域的索引和相应距离          
             KnnInfor knn[] = kgraph.getKnnInfor();
             //非对称图，对角线为0
@@ -173,6 +177,47 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
             }
         }
 
+    }
+public void setOptions(String[] options) throws Exception {
+        String tmpStr;
+        String classname;
+        String[] spec;
+        super.setOptions(options);
+
+        tmpStr = Utils.getOption("distance", options);
+        if (tmpStr.length() != 0) {
+            spec = Utils.splitOptions(tmpStr);
+            if (spec.length == 0) {
+                throw new Exception("Invalid DistanceFunction specification string.");
+            }
+            classname = spec[0];
+            spec[0] = "";
+
+            setDistanceFunction((DistanceFunction) Utils.forName(DistanceFunction.class, classname, spec));
+        } else {
+            setDistanceFunction(new EuclideanDistance());
+        }
+} /**
+     * Gets the current settings of the classifier.
+     *
+     * @return an array of strings suitable for passing to setOptions
+     */
+    public String[] getOptions() {
+        Vector result;
+        String[] options;
+        int i;
+        result = new Vector();
+        options = super.getOptions();
+        for (i = 0; i < options.length; i++) {
+            result.add(options[i]);
+        }
+
+        result.add("-distance");
+        result.add(getSpecification(getDistanceFunction()));
+
+
+
+        return (String[]) result.toArray(new String[result.size()]);
     }
 
     /**
@@ -361,6 +406,33 @@ public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier imple
     protected void build() throws Exception {
         init();
         buildClassifier();
+    }
+  /**
+     * Returns the tip text for this property
+     *
+     * @return 		tip text for this property suitable for
+     * 			displaying in the explorer/experimenter gui
+     */
+    public String distanceFunctionTipText() {
+        return "The distance function to use for finding neighbours " + "(default: weka.core.EuclideanDistance). ";
+    }
+
+    /**
+     * returns the distance function currently in use
+     *
+     * @return		the current distance function
+     */
+    public DistanceFunction getDistanceFunction() {
+        return m_DistanceFunction;
+    }
+
+    /**
+     * sets the distance function to use
+     *
+     * @param value	the distance function to use
+     */
+    public void setDistanceFunction(DistanceFunction value) {
+        m_DistanceFunction = value;
     }
 
     /**

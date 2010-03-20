@@ -42,7 +42,7 @@ public final class YongSplitInfo
   /** for serialization */
   private static final long serialVersionUID = 1864267581079767881L;
 
-  private int  number;         // number of total instances
+private int  number;         // number of total instances
   private int  first;          // first instance index
   private int  last;           // last instance index
   private int  position;       // position of maximum impurity reduction

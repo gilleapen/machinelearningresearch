@@ -39,7 +39,7 @@ public class SubsetReliefFAttributeEval
     /** Random number seed used for sampling instances */
     private int m_seed;
     private int m_numAttribs;
-    private int m_classIndex;
+    private int m_classIndex;            //类别属性的属性索引号
     private int m_numInstances;
     private boolean m_isNumericClass;
     private int[] m_stored;
@@ -71,26 +71,26 @@ public class SubsetReliefFAttributeEval
         m_numAttribs = m_trainInstances.numAttributes();
         m_numInstances = m_trainInstances.numInstances();
         m_isNumericClass = m_trainInstances.attribute(m_classIndex).isNumeric();
-
+        
         if (!m_isNumericClass) {
             m_numClasses = m_trainInstances.attribute(m_classIndex).numValues();
         } else {
             m_numClasses = 1;
         }
 
-            m_karray = new double[m_numClasses][m_Knn][2];
+        m_karray = new double[m_numClasses][m_Knn][2];
 
-    if (!m_isNumericClass) {
-      m_classProbs = new double[m_numClasses];
+        if (!m_isNumericClass) {
+            m_classProbs = new double[m_numClasses];
 
-      for (int i = 0; i < m_numInstances; i++) {
-        m_classProbs[(int)m_trainInstances.instance(i).value(m_classIndex)]++;
-      }
+            for (int i = 0; i < m_numInstances; i++) {
+                m_classProbs[(int) m_trainInstances.instance(i).value(m_classIndex)]++;
+            }
 
-      for (int i = 0; i < m_numClasses; i++) {
-        m_classProbs[i] /= m_numInstances;
-      }
-    }
+            for (int i = 0; i < m_numClasses; i++) {
+                m_classProbs[i] /= m_numInstances;
+            }
+        }
         m_worst = new double[m_numClasses];
         m_index = new int[m_numClasses];
         m_stored = new int[m_numClasses];
@@ -139,12 +139,43 @@ public class SubsetReliefFAttributeEval
                     }
                 }
                 findKHitMiss(z);
-                weight = calSubsetWeight(z,subset);
+                double[] diff = calSubsetDiff(z, subset);
+                int cl = (int) m_trainInstances.instance(z).value(m_classIndex);
+
+                double sameClassDiff = diff[cl];
+                double diffClassDiff = calDiffClassDiff(z, diff);
+
+                weight = weight - sameClassDiff / m_totalInstances + diffClassDiff / m_totalInstances;
+
+                if (Double.isNaN(sameClassDiff) || sameClassDiff > 1) {
+                    System.out.println("sameClassDiff=" + sameClassDiff + "\n");
+                }
+                if (Double.isNaN(diffClassDiff) || diffClassDiff > 1) {
+                    System.out.println("diffClassDiff=" + diffClassDiff + "\n");
+                }
+
             }
         }
 
         //throw new UnsupportedOperationException("Not supported yet.");
-        return weight;
+        if (Double.isNaN(weight) || weight > 1) {
+            System.out.println("weight=" + weight + "\n");
+        }
+        return Math.abs(weight);
+    }
+
+    /**
+     * Returns a string describing this attribute evaluator
+     * @return a description of the evaluator suitable for
+     * displaying in the explorer/experimenter gui
+     */
+    public String globalInfo() {
+        return "SubsetReliefFAttributeEval :\n\nEvaluates the worth of an attribute by "
+                + "repeatedly sampling an instance and considering the value of the "
+                + "given attribute for the nearest instance of the same and different "
+                + "class. Can operate on both discrete and continuous class data.\n\n"
+                + "For more information see:\n\n"
+                + getTechnicalInformation().toString();
     }
 
     /**
@@ -664,10 +695,83 @@ public class SubsetReliefFAttributeEval
         return RevisionUtils.extract("$Revision: 1.23 $");
     }
 
-    private double calSubsetWeight(int index,BitSet subset) {
-        double weight=0;
-        int cl=(int)m_trainInstances.instance(index).value(m_classIndex);
-        return weight;
+    /**
+     *
+     * @param index  抽样数据记录的索引号
+     * @param subset  评价子集的标记数组
+     * @return
+     */
+    private double[] calSubsetDiff(int index, final BitSet subset) {
+        double[] diff = new double[m_numClasses];
+
+        int cl = (int) m_trainInstances.instance(index).value(m_classIndex);
+        int k = m_stored[cl];
+        if (k != m_Knn) {
+            System.out.println("Knn 过大!  k=" + k);
+        }
+
+        for (int c = 0; c < m_numClasses; c++) {
+            for (int i = 0; i < k; i++) {
+                diff[c] = diff[c] + calSubsetNormDistance(index, (int) m_karray[c][i][1], subset);
+            }
+            diff[c] = diff[c] / k;
+
+        }
+
+        return diff;
+        //throw new UnsupportedOperationException("Not yet implemented");
+    }
+
+    private double calSubsetNormDistance(int thisIdx, int cmpIdx, final BitSet subset) {
+
+        if (thisIdx == cmpIdx) {
+            return 0;
+        }
+
+        double dist = 0;
+        int subSize = subset.size();
+        Instance thisInstance = m_trainInstances.instance(thisIdx);
+        Instance cmpInstance = m_trainInstances.instance(cmpIdx);
+
+        for (int i = 0; i < subSize; i++) {
+            if (subset.get(i)) {
+//                double x = norm(thisInstance.value(i), i);
+//                double y = norm(cmpInstance.value(i), i);
+//                dist = dist + (x - y) * (x - y);
+                double d = difference(i, thisInstance.value(i), cmpInstance.value(i));
+                dist = dist + d * d;
+            }
+        }
+
+        dist = dist / subSize;
+        dist = Math.sqrt(dist);
+
+        return dist;
+    }
+
+    private double[] calDiffClassProbs(int index) {
+        double[] p = new double[m_numClasses];
+        int cl = (int) m_trainInstances.instance(index).value(m_classIndex);
+        for (int c = 0; c < m_numClasses; c++) {
+            if (c != cl) {
+                p[c] = m_classProbs[c] / (1 - m_classProbs[cl]);
+            }
+        }
+        p[cl] = 1;
+        return p;
+        //throw new UnsupportedOperationException("Not yet implemented");
+    }
+
+    private double calDiffClassDiff(int index, final double[] diff) {
+        double result = 0;
+        double[] p = calDiffClassProbs(index);
+        int cl = (int) m_trainInstances.instance(index).value(m_classIndex);
+        for (int c = 0; c < m_numClasses; c++) {
+            if (c != cl) {
+                result = result + p[c] * diff[c];
+            }
+        }
+        return result;
         //throw new UnsupportedOperationException("Not yet implemented");
     }
 }

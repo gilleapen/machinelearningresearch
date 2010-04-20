@@ -552,12 +552,13 @@ public class SubsetReliefFAttributeEval
                         first.valueSparse(p1), 0);
                 p1++;
             }
-            //      distance += diff * diff;
-            distance += diff;
+            distance += diff * diff;
+            //distance += diff;
         }
 
-        //    return Math.sqrt(distance / m_NumAttributesUsed);
-        return distance;
+        //return Math.sqrt(distance / m_NumAttributesUsed);
+        return Math.sqrt(distance / m_trainInstances.numAttributes());
+        //return distance;
     }
 
     /**

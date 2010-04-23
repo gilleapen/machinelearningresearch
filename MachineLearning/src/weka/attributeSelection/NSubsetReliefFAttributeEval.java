@@ -41,7 +41,6 @@ public class NSubsetReliefFAttributeEval
     private int m_numInstances;
     private int m_numValidInstances;
     private boolean m_isNumericClass;
-    private int[] m_index;
     private double[] m_worst;
     private double[] m_minArray;
     private double[] m_maxArray;
@@ -51,6 +50,7 @@ public class NSubsetReliefFAttributeEval
     private double[] m_classProbs;
     private int[] m_classNum;
     private int m_seed;
+    Instances[] m_classInst;
 
     /**
      * Constructor
@@ -95,12 +95,11 @@ public class NSubsetReliefFAttributeEval
             }
         }
         m_worst = new double[m_numClasses];
-        m_index = new int[m_numClasses];
         m_minArray = new double[m_numAttribs];
         m_maxArray = new double[m_numAttribs];
         m_aveArray = new double[m_numAttribs];
         m_aveClassArray = new double[m_numClasses][m_numAttribs];
-        m_classNum=new int[m_numClasses];
+        m_classNum = new int[m_numClasses];
 
         for (int i = 0; i < m_numAttribs; i++) {
             m_minArray[i] = m_maxArray[i] = Double.NaN;
@@ -114,49 +113,50 @@ public class NSubsetReliefFAttributeEval
             m_aveArray[i] = m_trainInstances.meanOrMode(i);
         }
 
-        Instances[] classInst = new Instances[m_numClasses];
-        for(int c=0;c<m_numClasses;c++){
-            classInst[c]=new Instances(m_trainInstances);
-            classInst[c].delete();
+        m_classInst = new Instances[m_numClasses];
+        for (int c = 0; c < m_numClasses; c++) {
+            m_classInst[c] = new Instances(m_trainInstances);
+            m_classInst[c].delete();
         }
         for (int i = 0; i < m_numInstances; i++) {
             if (!(m_trainInstances.instance(i).isMissing(m_classIndex))) {
                 Instance thisInst = m_trainInstances.instance(i);
                 int cl = (int) thisInst.value(m_classIndex);
-                classInst[cl].add(thisInst);
+                m_classInst[cl].add(thisInst);
                 m_classNum[cl]++;
             }
         }
 
         for (int c = 0; c < m_numClasses; c++) {
             for (int i = 0; i < m_numAttribs; i++) {
-                m_aveClassArray[c][i] = classInst[c].meanOrMode(i);
+                m_aveClassArray[c][i] = m_classInst[c].meanOrMode(i);
             }
         }
         //throw new UnsupportedOperationException("Not supported yet.");
     }
 
     public double evaluateSubset(BitSet subset) throws Exception {
-        double weight = 1.0;
+        double weight = 0;
 
         for (int cl = 0; cl < m_numClasses; cl++) {
             double[] diff = calSubsetDiff(cl, subset);
             double sameClassDiff = diff[cl];
             double diffClassDiff = calDiffClassDiff(cl, diff);
 
-            if (Double.isNaN(sameClassDiff) || sameClassDiff > 1) {
+            if (Double.isNaN(sameClassDiff) || Math.abs(sameClassDiff) > 1) {
                 System.out.println("sameClassDiff=" + sameClassDiff + "\n");
             }
-            if (Double.isNaN(diffClassDiff) || diffClassDiff > 1) {
+            if (Double.isNaN(diffClassDiff) || Math.abs(diffClassDiff) > 1) {
                 System.out.println("diffClassDiff=" + diffClassDiff + "\n");
             }
 
-            //weight = weight - sameClassDiff / m_numClasses + diffClassDiff / m_numClasses;
-            weight = weight * diffClassDiff / sameClassDiff;
+            double diffDiff = diffClassDiff - sameClassDiff;
+            weight = weight + diffDiff;
         }
+        weight = weight / m_numClasses;
 
         //throw new UnsupportedOperationException("Not supported yet.");
-        if (Double.isNaN(weight) || weight > 1) {
+        if (Double.isNaN(weight) || Math.abs(weight) > 1) {
             System.out.println("weight=" + weight + "\n");
         }
         return Math.abs(weight);

@@ -85,6 +85,13 @@ weka.attributeSelection.ASEvaluation=\
  weka.attributeSelection.SVMAttributeEval,\
  weka.attributeSelection.SymmetricalUncertAttributeEval,\
  weka.attributeSelection.SymmetricalUncertAttributeSetEval,\
+ weka.attributeSelection.SubsetReliefFAttributeEval,\
+ weka.attributeSelection.HSubsetReliefFAttributeEval,\
+ weka.attributeSelection.DSubsetReliefFAttributeEval,\
+ weka.attributeSelection.NSubsetReliefFAttributeEval,\
+ weka.attributeSelection.SubsetFisherAttributeEval,\
+ weka.attributeSelection.MinNSubsetReliefFAttributeEval,\
+ weka.attributeSelection.MinSubsetFisherAttributeEval,\
  weka.attributeSelection.WrapperSubsetEval
  
 # Lists the VisualizePlugins I want to choose from

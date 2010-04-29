@@ -357,24 +357,27 @@ public class SemiSupSSelectEval extends ASEvaluation
     m_classIndex = m_trainInstances.classIndex(); //类别索引
     m_numAttribs = m_trainInstances.numAttributes(); //特征数目
     m_numInstances = m_trainInstances.numInstances(); //样本数目
+    m_DistanceFunction = new EuclideanDistance(); //欧式距离函数
+    m_DistanceFunction.setInstances(m_trainInstances);
 
+    m_IsLabeled = new boolean[m_numInstances];
+    m_numLabeled = 0;
     Vector a  = new Vector(2);
     double[] classArray = m_trainInstances.attributeToDoubleArray(m_classIndex);
     for(int i = 0; i < m_numInstances; i++)
     {
         if(m_trainInstances.instance(i).classIsMissing() == false)
         {
+            m_IsLabeled[i] = true; m_numLabeled ++;
             if( a.contains((Double)classArray[i]) == false )
-            { a.add((Double)classArray[i]);}
+            {   a.add((Double)classArray[i]);}
         }
+        else{  m_IsLabeled[i] = false;}
     }
     m_Yvalues = a;
-    if(m_trainInstances.attribute(m_classIndex).isNumeric())
-    {    m_numClasses = a.size();  }
-    else {m_numClasses = m_trainInstances.attribute(m_classIndex).numValues();}
+    m_numClasses = a.size();  
     if(m_numClasses != 2) {  throw new Exception("本方法只可以处理两类问题！"); }
-    m_DistanceFunction =new EuclideanDistance();
-    m_DistanceFunction.setInstances(m_trainInstances);
+
     compute_w(); //double[][] m_w
     computeMatrixW(); //Matrix m_MatrixW
     compute_d(); //double[] m_d
@@ -382,15 +385,6 @@ public class SemiSupSSelectEval extends ASEvaluation
     computeMatrixL(); //Matrix m_MatrixL
     computeVolV(); //double m_VolV
     
-    m_IsLabeled = new boolean[m_numInstances];
-    m_numLabeled = 0;
-    for(int i = 0; i < m_numInstances; i++)
-    {
-        if(m_trainInstances.instance(i).classIsMissing() == false)
-         {  m_IsLabeled[i] = true; m_numLabeled ++;}
-        else  {  m_IsLabeled[i] = false; }
-    }
-
     // the final attribute weights
     m_weights = new double[m_numAttribs];
     double[] f,g;
@@ -601,9 +595,9 @@ public class SemiSupSSelectEval extends ASEvaluation
               +(gycount[0][1] * Math.log10(gycount[0][1]/(gcount[0]*ycount[1])))
               +(gycount[1][0] * Math.log10(gycount[1][0]/(gcount[1]*ycount[0])))
               +(gycount[1][1] * Math.log10(gycount[1][1]/(gcount[1]*ycount[1])));
-      NMI_GY /= Math.log(2);
+      NMI_GY /= Math.log10(2);
       NMI_GY /= Math.max(H_g, H_y);
-      return NMI_GY;
+      return 1.0 - NMI_GY;
   }
 
   /**
@@ -617,7 +611,7 @@ public class SemiSupSSelectEval extends ASEvaluation
       for(int i = 0; i < m_numInstances; i++)
       {
           for(int j = 0; j < m_numInstances; j++)
-          {  s_numerator += (g[i] -g[j]) * (g[i] -g[j]) * m_w[i][j];}
+          {  s_numerator += (g[i] -g[j]) * (g[i] -g[j]) * m_MatrixW.get(i, j);}
       }
       //compute s_denominator
       for(int i = 0;i <m_numInstances; i++)
@@ -651,9 +645,9 @@ public class SemiSupSSelectEval extends ASEvaluation
      */
   private void computeVolV()
   {
-      double volV =0.0;
+      m_VolV =0.0;
       for(int i =0; i < m_numInstances; i++)
-      {   volV += m_d[i]; }
+      {   m_VolV += m_d[i]; }
   }
 
   /**

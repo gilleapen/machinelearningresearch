@@ -497,7 +497,7 @@ public class SemiSupSSelectEval extends ASEvaluation
     double[] f,g;
     double[] g_yiba, y = compute_y();
     double w_unsup,w_sup;
-    for(int i= 0;i < m_numAttribs;i++)
+    for(int i = 0;i < m_numAttribs;i++)
     {
         if( i != m_classIndex )
         {

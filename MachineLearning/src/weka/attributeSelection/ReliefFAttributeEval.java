@@ -577,6 +577,7 @@ public class ReliefFAttributeEval
    *
    * @return a description of the evaluator as a String.
    */
+    @Override
   public String toString () {
     StringBuffer text = new StringBuffer();
 
@@ -616,6 +617,7 @@ public class ReliefFAttributeEval
    * @return            the capabilities of this evaluator
    * @see               Capabilities
    */
+    @Override
   public Capabilities getCapabilities() {
     Capabilities result = super.getCapabilities();
     
@@ -1329,6 +1331,7 @@ public class ReliefFAttributeEval
    * 
    * @return		the revision
    */
+    @Override
   public String getRevision() {
     return RevisionUtils.extract("$Revision: 1.23 $");
   }

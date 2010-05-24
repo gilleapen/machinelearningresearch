@@ -18,6 +18,14 @@ import weka.core.TechnicalInformation.Type;
 import weka.core.TechnicalInformationHandler;
 import weka.core.Utils;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import weka.core.MySave;
+import weka.core.converters.ConverterUtils.DataSource;
+import weka.filters.Filter;
+import weka.filters.unsupervised.attribute.Remove;
+
 public class HSubsetReliefFAttributeEval
         extends ASEvaluation
         implements SubsetEvaluator,
@@ -667,7 +675,7 @@ public class HSubsetReliefFAttributeEval
         if (m_trainInstances == null) {
             text.append("ReliefF feature evaluator has not been built yet\n");
         } else {
-            text.append("\tReliefF Ranking Filter");
+            text.append("\tHSubsetReliefF Ranking Filter");
             text.append("\n\tInstances sampled: ");
 
             if (m_sampleM == -1) {
@@ -775,4 +783,82 @@ public class HSubsetReliefFAttributeEval
         return result;
         //throw new UnsupportedOperationException("Not yet implemented");
     }
+    public static void main (String[] args) {
+       runEvaluator(new HSubsetReliefFAttributeEval(), args);
+       //MyOwn_runEvaluator(new HSubsetReliefFAttributeEval(), args);
+     }
+    protected static void MyOwn_runEvaluator(ASEvaluation evaluator, String[] options){
+        try {
+            System.out.println(
+	  HSubsetReliefFAttributeEval.SelectAttributes(evaluator, options));
+        }
+        catch (Exception e) {
+        String msg = e.toString().toLowerCase();
+        if (    (msg.indexOf("help requested") == -1)
+            && (msg.indexOf("no training file given") == -1) )
+        e.printStackTrace();
+        System.err.println(e.getMessage());
+    }
+  }
+     public static String SelectAttributes (ASEvaluation ASEvaluator,
+					 String[] options) throws Exception
+     {
+         String[] optionsTmp = (String[]) options.clone();
+         String trainFileName = Utils.getOption('i', optionsTmp);
+         DataSource source = new DataSource(trainFileName);
+         Instances train = source.getDataSet();
+
+         int k =0;
+         String reduceDataSaveName = Utils.getOption('R', options);
+         if (reduceDataSaveName.length() != 0) { k+=2;}
+         String stringBufferSaveName = Utils.getOption('B', options);
+         if (stringBufferSaveName.length() != 0) { k+=2;}
+         String[] optionsNew = new String[options.length - k];
+         int cnt = 0;
+         for(int i = 0;i < options.length;i++)
+         {    if(options[i].equals("") == false) optionsNew[cnt++] = options[i];}
+         options = optionsNew;
+
+         String startTime ="Start Time: ";
+         Calendar start = Calendar.getInstance();
+         startTime = startTime.concat(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss ").format(new Date()));
+
+         String stringBuffer = AttributeSelection.SelectAttributes(ASEvaluator, options);
+         Instances reduceData = null; //约简的数据集
+         int[] selectedAttributeSet = null; //约简的特征索引号
+         int beginIndex = stringBuffer.indexOf("Selected attributes: ") + "Selected attributes: ".length();
+         String selected = stringBuffer.substring(beginIndex);
+         selected = selected.substring(0,selected.indexOf(" : "));
+         String[] selectedAttributeSetStr = selected.split(",");
+         selectedAttributeSet = new int[selectedAttributeSetStr.length + 1];
+         for(int i = 0;i < selectedAttributeSetStr.length; i++)
+         {   selectedAttributeSet[i] = Integer.parseInt(selectedAttributeSetStr[i]) -1 ;}
+         String classIndexStr = stringBuffer.substring(stringBuffer.indexOf(", Class ("));
+         classIndexStr = classIndexStr.substring(classIndexStr.indexOf("): ") + "): ".length());
+         classIndexStr = classIndexStr.substring(0,classIndexStr.indexOf(" "));
+         int classIndex = Integer.parseInt(classIndexStr);
+         selectedAttributeSet[selectedAttributeSetStr.length] = classIndex - 1;
+
+         Remove attributeFilter = new Remove();
+         attributeFilter.setAttributeIndicesArray(selectedAttributeSet);
+         attributeFilter.setInvertSelection(true);
+         attributeFilter.setInputFormat(train);
+         reduceData = Filter.useFilter(train, attributeFilter);
+
+         String endTime = "End Time:";
+         Calendar end = Calendar.getInstance();
+         endTime = endTime.concat(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss ").format(new Date()));
+
+         long Time_Interval = end.getTimeInMillis()-start.getTimeInMillis(); //Mill second
+         Time_Interval /= 1000; //turn to second
+         String timeInterval = "Time :";
+         timeInterval = timeInterval.concat(String.valueOf(Time_Interval));
+         timeInterval = timeInterval.concat(" second ");
+
+         MySave.SaveInstances(reduceData, reduceDataSaveName);
+         String NewStringBuffer = stringBuffer.concat(startTime).concat(endTime).concat(timeInterval);
+         MySave.SaveStringBuffer(NewStringBuffer, stringBufferSaveName);
+
+         return stringBuffer;
+     }
 }

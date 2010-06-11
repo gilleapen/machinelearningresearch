@@ -55,7 +55,7 @@ public class FHX {
               {
                    selectedIndexs[i] = Integer.valueOf(selectedIndexsStr[i]) -1 ;
               }
-              selectedIndexs[selectedIndexsStr.length] = classIndex -1;
+              selectedIndexs[selectedIndexsStr.length] = classIndex;
               CreateReducedData(trainFileName, selectedIndexs);
          }
     }

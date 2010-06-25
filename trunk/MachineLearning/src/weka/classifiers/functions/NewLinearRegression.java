@@ -15,7 +15,7 @@
  */
 
 /*
- *    LinearRegression.java
+ *    NewLinearRegression.java
  *    Copyright (C) 1999 University of Waikato, Hamilton, New Zealand
  *
  */
@@ -71,9 +71,17 @@ import weka.core.FastVector;
  *
  <!-- options-end -->
  *
- * @author Eibe Frank (eibe@cs.waikato.ac.nz)
+ * @author Hongxia Fang(fanghongxia2008@ayhoo.cn)
  * @author Len Trigg (trigg@cs.waikato.ac.nz)
  * @version $Revision: 1.24 $
+ * 本方法(NewLinearRegression)是在LinearRegression的基础上进行改进的，
+ * 原因是LinearRegression不能对类别为nominal类型的数据进行分类预测。
+ * LinearRegression只能针对类别为Numeric的数据，而本方法可以适用于类别为nominal类型的数据。
+ * 修改之处：
+ * 1.增加了类成员变量m_NumClasses；
+ * 2.在成员函数buildClassifier(）里面对其参数instances进行必要的预变换成为data。
+ * 3.在regressionPrediction（）方法里面添加2句关于预测结果上下线的越界处理。
+ * 4.重写了Classifier基类的distributionForInstance（）方法。
  */
 public class NewLinearRegression extends Classifier implements OptionHandler,
   WeightedInstancesHandler {
@@ -224,6 +232,7 @@ public class NewLinearRegression extends Classifier implements OptionHandler,
   data.deleteClassAttribute();
   data = Instances.mergeInstances(data, MyNewClassInstances);
   data.setClass(data.attribute(className));
+  //--------------------------------预处理结束--------------------------------//
   //-------------------------------------------------------------------------//
     if (!m_checksTurnedOff) {
       // can classifier handle the data?
@@ -867,8 +876,10 @@ public double[] distributionForInstance(Instance instance) throws Exception {
       }
     }
     result += coefficients[column];
-//    if(result < 0){ result = 0.01; }
-//    if(result >= m_NumClasses) { result = m_NumClasses - 0.01;}
+    //------------------------------------------------------------------------//
+    if(result < 0){ result = 0.0001; }
+    if(result >= m_NumClasses) { result = m_NumClasses - 0.0001;}
+    //------------------------------------------------------------------------//
     return result;
   }
 

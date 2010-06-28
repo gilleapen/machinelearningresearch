@@ -28,11 +28,17 @@ public class FHX {
          attributeFilter.setInputFormat(train);
          reduceData = Filter.useFilter(train, attributeFilter);
          String reducedFileName = trainFileName.substring(0,trainFileName.indexOf(".arff"));
-         for(int i = 0; i < selectedAttributeSet.length -1; i++)
-         {
-             reducedFileName = reducedFileName.concat("_");
-             reducedFileName = reducedFileName.concat(String.valueOf(selectedAttributeSet[i] + 1));
-         }
+
+         reducedFileName +="-";
+         reducedFileName +=String.valueOf(selectedAttributeSet.length);
+         String [] options = ((OptionHandler)attributeFilter).getOptions();
+         for (int i = 0; i < options.length; i++) { reducedFileName += options[i].trim();}
+
+//         for(int i = 0; i < selectedAttributeSet.length -1; i++)
+//         {
+//             reducedFileName = reducedFileName.concat("_");
+//             reducedFileName = reducedFileName.concat(String.valueOf(selectedAttributeSet[i] + 1));
+//         }
          reducedFileName =reducedFileName.concat(".arff");
          MySave.SaveInstances(reduceData, reducedFileName);
     }

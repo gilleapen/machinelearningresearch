@@ -994,6 +994,6 @@ public double[] distributionForInstance(Instance instance) throws Exception {
    * @param argv the options
    */
   public static void main(String argv[]) {
-    runClassifier(new LinearRegression(), argv);
+    runClassifier(new NewLinearRegression(), argv);
   }
 }

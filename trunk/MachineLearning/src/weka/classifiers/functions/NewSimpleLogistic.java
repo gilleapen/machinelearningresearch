@@ -127,7 +127,7 @@ public class NewSimpleLogistic
     static final long serialVersionUID = 7397710626304705059L;
 
     /**The actual logistic regression model */
-    protected LogisticBase m_boostedModel;
+    protected NewLogisticBase m_boostedModel;
 
     /**Filter for converting nominal attributes to binary ones*/
     protected NominalToBinary m_NominalToBinary = null;
@@ -230,7 +230,7 @@ public class NewSimpleLogistic
 	data = Filter.useFilter(data, m_NominalToBinary);
 
 	//create actual logistic model
-	m_boostedModel = new LogisticBase(m_numBoostingIterations, m_useCrossValidation, m_errorOnProbabilities);
+	m_boostedModel = new NewLogisticBase(m_numBoostingIterations, m_useCrossValidation, m_errorOnProbabilities);
 	m_boostedModel.setMaxIterations(m_maxBoostingIterations);
 	m_boostedModel.setHeuristicStop(m_heuristicStop);
         m_boostedModel.setWeightTrimBeta(m_weightTrimBeta);
@@ -247,7 +247,6 @@ public class NewSimpleLogistic
      * @return the probabilities
      * @throws Exception if distribution can't be computed successfully
      */
-    @Override
     public double[] distributionForInstance(Instance inst)
 	throws Exception {
 

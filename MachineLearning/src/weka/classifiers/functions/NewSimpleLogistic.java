@@ -23,7 +23,7 @@
 package weka.classifiers.functions;
 
 import weka.classifiers.Classifier;
-import weka.classifiers.trees.lmt.LogisticBase;
+import weka.classifiers.trees.lmt. NewLogisticBase;
 import weka.core.AdditionalMeasureProducer;
 import weka.core.Capabilities;
 import weka.core.Instance;

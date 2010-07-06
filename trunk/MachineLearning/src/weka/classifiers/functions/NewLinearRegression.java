@@ -72,7 +72,6 @@ import weka.core.FastVector;
  <!-- options-end -->
  *
  * @author Hongxia Fang(fanghongxia2008@ayhoo.cn)
- * @author Len Trigg (trigg@cs.waikato.ac.nz)
  * @version $Revision: 1.24 $
  * 本方法(NewLinearRegression)是在LinearRegression的基础上进行改进的，
  * 原因是LinearRegression不能对类别为nominal类型的数据进行分类预测。

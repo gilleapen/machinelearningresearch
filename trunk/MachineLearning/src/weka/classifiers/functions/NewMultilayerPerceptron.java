@@ -147,8 +147,12 @@ import javax.swing.JTextField;
  *
  <!-- options-end -->
  *
- * @author Malcolm Ware (mfw4@cs.waikato.ac.nz)
+ * @author Hongxia Fang(fanghongxia2008@ayhoo.cn)
  * @version $Revision: 1.12 $
+ * * 本方法(NewMultilayerPerceptron)是在MultilayerPerceptron的基础上进行改进的，
+ * 原因是MultilayerPerceptron输出的是神经网络的结构，即各个权重；
+ * 而非公式，因协和医院的骨龄数据处理需要输出公式，因此改写。
+ * 修改之处：public String toString()函数的实现体内部。
  */
 public class NewMultilayerPerceptron
   extends Classifier

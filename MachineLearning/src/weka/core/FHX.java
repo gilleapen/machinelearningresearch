@@ -35,8 +35,10 @@ public class FHX {
          String [] options = ((OptionHandler)attributeFilter).getOptions();
          for (int i = 0; i < options.length; i++) { reducedFileName += options[i].trim();}
 
-         reducedFileName =reducedFileName.concat(".arff");
          reduceData.setRelationName(reducedFileName);
+         if(reducedFileName.length()>253){reducedFileName = reducedFileName.substring(0, 253);}
+         reducedFileName = reducedFileName.concat(".arff");
+         
          MySave.SaveInstances(reduceData, reducedFileName);
     }
     private static void CreatReducedData(String trainFileName,String selectedIndexsFileName)

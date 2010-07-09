@@ -6,6 +6,7 @@
 package weka.core;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import weka.core.converters.ConverterUtils.DataSource;
 import weka.filters.Filter;
@@ -36,8 +37,12 @@ public class FHX {
          for (int i = 0; i < options.length; i++) { reducedFileName += options[i].trim();}
 
          reduceData.setRelationName(reducedFileName);
-         if(reducedFileName.length()>253){reducedFileName = reducedFileName.substring(0, 253);}
+         //windows可以长度达258个字符的绝对路径文件名（包括后缀），
+         //因为盘符是硬件相关的包括三个符号，比如“c:\”或者“D:\”,所以实质是255个长度。
+         if(reducedFileName.length()+".arff".length() > 258){reducedFileName = reducedFileName.substring(0, 253);}
          reducedFileName = reducedFileName.concat(".arff");
+         System.out.println(reducedFileName );
+         System.out.println(reducedFileName.length() );
          
          MySave.SaveInstances(reduceData, reducedFileName);
     }
@@ -74,6 +79,8 @@ public class FHX {
         {
          trainFileName = Utils.getOption('T', options);
          selectedIndexsFileName = Utils.getOption('S', options);
+         File A=new File(trainFileName);
+         trainFileName = A.getAbsolutePath();
          CreatReducedData(trainFileName,selectedIndexsFileName);
         }
         catch(Exception e)

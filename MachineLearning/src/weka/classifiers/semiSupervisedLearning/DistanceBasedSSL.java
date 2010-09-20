@@ -40,15 +40,15 @@ import weka.filters.unsupervised.attribute.ReplaceMissingValues;
 import weka.filters.unsupervised.attribute.Standardize;
 
 /**
- *  基于距离代价函数的 半监督学习
+ *  基于直接用距离计算 半监督学习
  * @author huangdongshan
  */
-public class CostDistanceBasedSSL extends CollectiveRandomizableClassifier implements
+public class DistanceBasedSSL extends CollectiveRandomizableClassifier implements
         TechnicalInformationHandler {
 
     /** Whether to normalize/standardize/neither */
     protected int m_filterType;
-    protected CostDistanceBasedSSL m_Parent;
+    protected DistanceBasedSSL m_Parent;
     private CostDistanceBasedSSLInstances m_Data;
     /** copy of the original training dataset */
     protected Instances m_TrainsetNew;
@@ -220,27 +220,27 @@ public void setOptions(String[] options) throws Exception {
         return (String[]) result.toArray(new String[result.size()]);
     }
 
-    /**
-     * 计算自适应的sigma =最小距离。
-     * @param weightGraph
-     * @return
-     */
-    double computeAdaptSigma(double[][] weightGraph) {
-        double sigma = 0.01;
-        double min = INF;
-        for (int i = 0; i < weightGraph.length; i++) {
-            for (int j = 0; j < weightGraph[0].length; j++) {
-                if (weightGraph[i][j] < min && weightGraph[i][j] != 0) {
-                    min = weightGraph[i][j];
-                }
-            }
-        }
-        //把最小值作为sigma
-        if (min > 0 && min < INF) {
-            sigma = min;
-        }
-        return sigma;
-    }
+//    /**
+//     * 计算自适应的sigma =最小距离。
+//     * @param weightGraph
+//     * @return
+//     */
+//    double computeAdaptSigma(double[][] weightGraph) {
+//        double sigma = 0.01;
+//        double min = INF;
+//        for (int i = 0; i < weightGraph.length; i++) {
+//            for (int j = 0; j < weightGraph[0].length; j++) {
+//                if (weightGraph[i][j] < min && weightGraph[i][j] != 0) {
+//                    min = weightGraph[i][j];
+//                }
+//            }
+//        }
+//        //把最小值作为sigma
+//        if (min > 0 && min < INF) {
+//            sigma = min;
+//        }
+//        return sigma;
+//    }
 
     /**
      * 
@@ -293,10 +293,10 @@ public void setOptions(String[] options) throws Exception {
         //String fileString="C:\\test.txt"
         FileWriter writer = new FileWriter("C:\\test.txt", true);
         Dijkstra dijkstra = new Dijkstra(weightGraph);
-       double sigma = computeAdaptSigma(weightGraph);
+    //   double sigma = computeAdaptSigma(weightGraph);
         //扩大代价距离的影响，设置sigma
 //        dijkstra.setSigma(m_sigma);
-        dijkstra.setSigma(sigma);
+      //  dijkstra.setSigma(sigma);
         //对未标记样本中的每一数据寻找到标记样本数据集合的最短路径。
         for (int unLabel = 0; unLabel < m_TrainsetNew.numInstances(); unLabel++) {
             if (m_TrainsetNew.instance(unLabel).classIsMissing())//未标记数据
@@ -318,8 +318,8 @@ public void setOptions(String[] options) throws Exception {
                             double targetClass = m_TrainsetNew.instance(target).classValue();
                             String str = Double.toString(targetClass);
                             // writer.write("Class " + str + "\n");
-                            //获得最短路径的代价距离和
-                            double tempcost = dijkstra.getCostPathDistance();
+                            //获得最短路径的距离和
+                            double tempcost = dijkstra.getPathDistance();
                             // 找最短路径集中的最短的路径和代价和
                             if (tempcost < mincostdistance) {
                                 mincostdistance = tempcost;
@@ -525,7 +525,7 @@ public void setOptions(String[] options) throws Exception {
         /** for serialization */
         private static final long serialVersionUID = 1975979462375468594L;
         /** the parent algorithm (used to get the parameters) */
-        protected CostDistanceBasedSSL m_Parent = null;
+        protected DistanceBasedSSL m_Parent = null;
         /** the unprocessed instances */
         protected Instance[] m_Unprocessed = null;
         /** the new training set */
@@ -547,7 +547,7 @@ public void setOptions(String[] options) throws Exception {
          * @param test        the test instances
          * @throws Exception  if something goes wrong
          */
-        public CostDistanceBasedSSLInstances(CostDistanceBasedSSL parent, Instances train, Instances test)
+        public CostDistanceBasedSSLInstances(DistanceBasedSSL parent, Instances train, Instances test)
                 throws Exception {
 
             super();
@@ -607,7 +607,7 @@ public void setOptions(String[] options) throws Exception {
          * 返回算法父类
          * @return
          */
-        private CostDistanceBasedSSL getParent() {
+        private DistanceBasedSSL getParent() {
             return m_Parent;
         }
 
